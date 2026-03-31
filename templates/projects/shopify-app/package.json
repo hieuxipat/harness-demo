@@ -1,0 +1,13 @@
+{
+  "name": "{{project_name}}",
+  "version": "0.1.0",
+  "description": "{{description}}",
+  "private": true,
+  "workspaces": ["web/frontend", "web/backend"],
+  "scripts": {
+    "dev": "shopify app dev",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}

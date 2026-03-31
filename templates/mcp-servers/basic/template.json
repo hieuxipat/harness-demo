@@ -1,0 +1,20 @@
+{
+  "name": "basic",
+  "description": "Basic MCP server skeleton with TypeScript",
+  "type": "mcp-server",
+  "variables": [
+    {
+      "name": "server_name",
+      "prompt": "Server name?",
+      "default": "my-mcp-server",
+      "type": "input",
+      "required": true
+    },
+    {
+      "name": "description",
+      "prompt": "Server description?",
+      "default": "A custom MCP server",
+      "type": "input"
+    }
+  ]
+}

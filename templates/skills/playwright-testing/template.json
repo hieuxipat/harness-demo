@@ -1,0 +1,13 @@
+{
+  "name": "playwright-testing",
+  "description": "Write E2E tests with Playwright for user flows",
+  "type": "skill",
+  "variables": [
+    {
+      "name": "skill_name",
+      "prompt": "Skill name?",
+      "default": "playwright-testing",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "security-audit",
+  "description": "Review code for security vulnerabilities and OWASP issues",
+  "type": "skill",
+  "variables": [
+    {
+      "name": "skill_name",
+      "prompt": "Skill name?",
+      "default": "security-audit",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "performance-review",
+  "description": "Audit code for frontend rendering and backend performance issues",
+  "type": "skill",
+  "variables": [
+    {
+      "name": "skill_name",
+      "prompt": "Skill name?",
+      "default": "performance-review",
+      "required": true
+    }
+  ]
+}

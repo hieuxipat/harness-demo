@@ -1,0 +1,13 @@
+{
+  "name": "debugging",
+  "description": "Systematic approach to finding and fixing bugs in React + Node.js",
+  "type": "skill",
+  "variables": [
+    {
+      "name": "skill_name",
+      "prompt": "Skill name?",
+      "default": "debugging",
+      "required": true
+    }
+  ]
+}

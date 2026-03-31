@@ -1,0 +1,13 @@
+{
+  "name": "documentation",
+  "description": "Write clear documentation for code, APIs, and components",
+  "type": "skill",
+  "variables": [
+    {
+      "name": "skill_name",
+      "prompt": "Skill name?",
+      "default": "documentation",
+      "required": true
+    }
+  ]
+}

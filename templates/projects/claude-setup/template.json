@@ -1,0 +1,53 @@
+{
+  "name": "claude-setup",
+  "description": "AI-agent structure for existing projects (CLAUDE.md, skills, settings)",
+  "type": "project",
+  "variables": [
+    {
+      "name": "project_name",
+      "prompt": "Project name?",
+      "default": "my-project",
+      "type": "input",
+      "required": true
+    },
+    {
+      "name": "description",
+      "prompt": "Project description?",
+      "default": "",
+      "type": "input",
+      "required": false
+    },
+    {
+      "name": "include_frontend",
+      "prompt": "Include frontend conventions?",
+      "default": true,
+      "type": "confirm"
+    },
+    {
+      "name": "frontend_dir",
+      "prompt": "Frontend directory name?",
+      "default": "frontend",
+      "type": "input",
+      "required": false
+    },
+    {
+      "name": "include_backend",
+      "prompt": "Include backend conventions?",
+      "default": true,
+      "type": "confirm"
+    },
+    {
+      "name": "backend_dir",
+      "prompt": "Backend directory name?",
+      "default": "backend",
+      "type": "input",
+      "required": false
+    }
+  ],
+  "conditionals": {
+    "__frontend_dir__": "include_frontend",
+    "__backend_dir__": "include_backend",
+    ".claude/settings-frontend.json": "include_frontend",
+    ".claude/settings-backend.json": "include_backend"
+  }
+}

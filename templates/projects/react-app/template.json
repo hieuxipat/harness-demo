@@ -1,0 +1,37 @@
+{
+  "name": "react-app",
+  "description": "React frontend with Redux, RTK Query, and Styled-components",
+  "type": "project",
+  "variables": [
+    {
+      "name": "project_name",
+      "prompt": "Project name?",
+      "default": "my-react-app",
+      "type": "input",
+      "required": true
+    },
+    {
+      "name": "description",
+      "prompt": "Description?",
+      "default": "",
+      "type": "input",
+      "required": false
+    },
+    {
+      "name": "port",
+      "prompt": "Dev server port?",
+      "default": "3000",
+      "type": "input",
+      "required": false
+    },
+    {
+      "name": "include_e2e",
+      "prompt": "Include Playwright E2E?",
+      "default": true,
+      "type": "confirm"
+    }
+  ],
+  "conditionals": {
+    "e2e": "include_e2e"
+  }
+}

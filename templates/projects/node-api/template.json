@@ -1,0 +1,28 @@
+{
+  "name": "node-api",
+  "description": "Node.js REST API with Express and TypeScript",
+  "type": "project",
+  "variables": [
+    {
+      "name": "project_name",
+      "prompt": "Project name?",
+      "default": "my-api",
+      "type": "input",
+      "required": true
+    },
+    {
+      "name": "description",
+      "prompt": "Description?",
+      "default": "",
+      "type": "input",
+      "required": false
+    },
+    {
+      "name": "port",
+      "prompt": "Server port?",
+      "default": "4000",
+      "type": "input",
+      "required": false
+    }
+  ]
+}

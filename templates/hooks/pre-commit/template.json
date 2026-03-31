@@ -1,0 +1,20 @@
+{
+  "name": "pre-commit",
+  "description": "Pre-commit hook that runs lint and type-check before committing",
+  "type": "hook",
+  "variables": [
+    {
+      "name": "hook_name",
+      "prompt": "Hook name?",
+      "default": "pre-commit",
+      "type": "input",
+      "required": true
+    },
+    {
+      "name": "lint_command",
+      "prompt": "Lint command?",
+      "default": "npm run lint",
+      "type": "input"
+    }
+  ]
+}
