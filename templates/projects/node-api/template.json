@@ -1,6 +1,6 @@
 {
   "name": "node-api",
-  "description": "Node.js REST API with Express and TypeScript",
+  "description": "Node.js REST API with NestJS and TypeScript",
   "type": "project",
   "variables": [
     {

@@ -2,20 +2,21 @@
 
 ## Architecture
 
-Express REST API with TypeScript.
+NestJS REST API with TypeScript.
 
-- `src/routes/` — Route definitions
-- `src/controllers/` — Request handlers (thin: validate → service → respond)
-- `src/services/` — Business logic (no req/res objects)
-- `src/middleware/` — Error handling, auth, validation
+- `src/app.module.ts` — Root module
+- `src/<module>/` — Feature modules (module, controller, service, DTOs)
 - `src/entities/` — TypeORM entities (SQL)
-- `src/models/` — Mongoose models (MongoDB)
+- `src/models/` — Mongoose schemas/models (MongoDB)
+- `src/config/` — Database and environment config
 
 ## Conventions
 
-- Route → Controller → Service layering: controllers never contain business logic
+- Module → Controller → Service pattern with NestJS dependency injection
+- Controllers: use decorators (@Get, @Post, @Param, @Body), no business logic
+- Services: pure business logic, injected into controllers via constructor
 - Consistent response format: `{ data, error, meta }`
-- Error handling: throw `AppError(statusCode, message)`, caught by `errorHandler` middleware
+- Error handling: NestJS built-in exceptions (NotFoundException, BadRequestException, etc.)
 - TypeORM: `@CreateDateColumn`/`@UpdateDateColumn` for timestamps
 - Mongoose: `{ timestamps: true }` option
-- All async handlers wrapped in try-catch, errors forwarded via `next(error)`
+- DTOs define request shape — one DTO per operation (CreateXDto, UpdateXDto)

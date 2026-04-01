@@ -14,7 +14,7 @@ This repository is the **single source of truth** for project scaffolding at Meg
 ## Tech Stack (across all templates)
 
 - **Frontend:** React 18, Redux Toolkit + RTK Query, Styled-components 6, Vite 5
-- **Backend:** Node.js, Express 4, TypeORM (PostgreSQL), Mongoose (MongoDB)
+- **Backend:** Node.js, NestJS 10, TypeORM (PostgreSQL), Mongoose (MongoDB)
 - **Testing:** Jest 29 (unit/integration), Playwright (E2E)
 - **Linting:** ESLint 8 + Prettier 3
 - **Platform:** Shopify (App Development — Polaris, App Bridge, Admin GraphQL API)
@@ -79,10 +79,10 @@ Templates use a variable-based engine:
 React SPA with Redux Toolkit, RTK Query, and Styled-components. Feature-based directory structure (`src/features/<name>/`). Includes example counter feature with slice, API, styles, and tests.
 
 ### node-api
-Express REST API with TypeScript. Includes both TypeORM (SQL) and Mongoose (MongoDB) setups — choose one and remove the other. Route → Controller → Service layering. Consistent `{ data, error, meta }` response format.
+NestJS REST API with TypeScript. Includes both TypeORM (SQL) and Mongoose (MongoDB) setups — choose one and remove the other. Module → Controller → Service pattern with dependency injection. Consistent `{ data, error, meta }` response format.
 
 ### fullstack
-npm workspaces monorepo combining `client/` (react-app structure) and `server/` (node-api structure). Vite proxies `/api` requests to the server during development.
+npm workspaces monorepo combining `client/` (react-app structure) and `server/` (NestJS). Vite proxies `/api` requests to the server during development.
 
 ### shopify-app
 Shopify embedded app with Polaris frontend + Express backend. Includes App Bridge provider, HMAC-validated webhook handlers, GDPR mandatory endpoints, and Shopify API client. Supports app extensions.
@@ -135,9 +135,10 @@ Claude Code automatically reads the nearest `CLAUDE.md` in the working directory
 - RTK Query for server state, Redux slices for UI state, `useState` for forms
 
 ### Backend
-- Route → Controller → Service layering: controllers are thin, services hold business logic
+- NestJS Module → Controller → Service pattern with dependency injection
+- Controllers handle HTTP only (decorators, params, status codes); services hold business logic
 - Consistent JSON response: `{ data, error, meta }`
-- Error handling: `AppError(statusCode, message)` → `errorHandler` middleware
+- Error handling: NestJS built-in exceptions (NotFoundException, BadRequestException, etc.)
 - TypeORM: `@CreateDateColumn`/`@UpdateDateColumn`; Mongoose: `{ timestamps: true }`
 
 ### Shopify

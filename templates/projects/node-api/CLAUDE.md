@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- **Dev server:** `npm run dev` (port {{port}})
+- **Dev server:** `npm run dev` (port {{port}}, watch mode)
 - **Build:** `npm run build`
 - **Start:** `npm start`
 - **Test:** `npm test` / `npm run test:watch` / `npm run test:coverage`
@@ -14,20 +14,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Express REST API with TypeScript. Includes both TypeORM (SQL) and Mongoose (MongoDB) setups — use whichever fits your database choice.
+NestJS REST API with TypeScript. Includes both TypeORM (SQL) and Mongoose (MongoDB) setups — use whichever fits your database choice.
 
-- `src/routes/` — Route definitions
-- `src/controllers/` — Request handling (thin — validate, call service, respond)
-- `src/services/` — Business logic (no req/res objects)
-- `src/middleware/` — Auth, error handling, validation
+- `src/` — Module-based structure (one directory per domain)
+- `src/<module>/` — Module, Controller, Service, DTOs
 - `src/entities/` — TypeORM entities (SQL)
-- `src/models/` — Mongoose models (MongoDB)
+- `src/models/` — Mongoose schemas/models (MongoDB)
 - `src/config/` — Database and environment config
 - `tests/` — Jest tests with supertest
 
 ### Conventions
 
-- Controllers are thin: validate input, call service, send response
-- Services contain all business logic
-- Consistent response format: { data, error, meta }
-- Use AppError class for typed errors
+- Module → Controller → Service pattern with dependency injection
+- Controllers handle HTTP concerns only (decorators, params, status codes)
+- Services contain all business logic, injected via constructor
+- Consistent response format: `{ data, error, meta }`
+- Use NestJS built-in exceptions (NotFoundException, BadRequestException, etc.)
+- DTOs for request validation

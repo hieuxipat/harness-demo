@@ -5,7 +5,7 @@ interface Example {
   createdAt: Date;
 }
 
-// Placeholder service — replace with TypeORM repository or Mongoose model
+// Placeholder service — replace with TypeORM repository or Mongoose model injection
 export class ExampleService {
   private examples: Example[] = [];
 

@@ -1,24 +1,25 @@
-# Server (Node.js API)
+# Server (NestJS API)
 
 ## Commands
 
-- **Dev:** `npm run dev` (port {{server_port}})
+- **Dev:** `npm run dev` (port {{server_port}}, watch mode)
 - **Build:** `npm run build`
 - **Test:** `npm test`
 - **Lint:** `npm run lint`
 
 ## Architecture
 
-Express REST API with TypeScript.
+NestJS REST API with TypeScript.
 
-- `src/routes/` — Route definitions
-- `src/controllers/` — Request handlers (thin: validate → service → respond)
-- `src/services/` — Business logic (no req/res objects)
-- `src/middleware/` — Error handling, auth, validation
+- `src/app.module.ts` — Root module
+- `src/<module>/` — Feature modules (module, controller, service, DTOs)
+- `src/health.controller.ts` — Health check endpoint
 
 ## Conventions
 
-- Route → Controller → Service layering
+- Module → Controller → Service pattern with dependency injection
+- Controllers handle HTTP concerns only (decorators, params, status codes)
+- Services contain all business logic, injected via constructor
 - Consistent response format: `{ data, error, meta }`
-- Error handling: throw `AppError(statusCode, message)`, caught by `errorHandler`
+- Use NestJS built-in exceptions (NotFoundException, BadRequestException, etc.)
 - All endpoints prefixed with `/api`

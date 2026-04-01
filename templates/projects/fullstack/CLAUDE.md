@@ -13,11 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Monorepo with npm workspaces: `client/` (React) + `server/` (Express).
+Monorepo with npm workspaces: `client/` (React) + `server/` (NestJS).
 
 - Client proxies `/api` requests to server during development
 - `client/src/app/` — Redux store and typed hooks
 - `client/src/features/` — Feature modules
 - `client/src/styles/` — Theme and styled-components config
-- `server/src/routes/` — API route definitions
-- `server/src/middleware/` — Error handling, auth
+- `server/src/app.module.ts` — NestJS root module
+- `server/src/<module>/` — Feature modules (controller, service, DTOs)

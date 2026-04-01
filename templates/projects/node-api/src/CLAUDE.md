@@ -2,20 +2,22 @@
 
 ## Directory Structure
 
+- `main.ts` — Application entry point (NestFactory bootstrap)
+- `app.module.ts` — Root module, imports all feature modules
+- `health.controller.ts` — Health check endpoint
+- `<module>/` — Feature modules (module, controller, service, DTOs)
 - `config/` — Database connections (`database.ts`) and environment config (`env.ts`)
-- `routes/` — Express route definitions, one file per resource
-- `controllers/` — Request handlers (thin layer: validate → call service → respond)
-- `services/` — Business logic (no `req`/`res` objects — pure data in, data out)
-- `middleware/` — Express middleware (auth, error handling, validation)
 - `entities/` — TypeORM entities for SQL databases
 - `models/` — Mongoose schemas/models for MongoDB
 - `utils/` — Shared utility functions
 
 ## Conventions
 
-- Route → Controller → Service layering: controllers never contain business logic
+- Module → Controller → Service pattern with NestJS dependency injection
+- Controllers: use decorators (@Get, @Post, @Param, @Body), no business logic
+- Services: pure business logic, injected into controllers via constructor
 - Consistent response format: `{ data, error, meta }`
-- Error handling: throw `AppError(statusCode, message)` in services, caught by `errorHandler` middleware
+- Error handling: throw NestJS built-in exceptions (NotFoundException, BadRequestException)
 - TypeORM entities use `@CreateDateColumn`/`@UpdateDateColumn` for timestamps
 - Mongoose schemas use `{ timestamps: true }` option
-- All async route handlers wrapped in try-catch, errors forwarded via `next(error)`
+- DTOs define request shape — one DTO per operation (CreateXDto, UpdateXDto)

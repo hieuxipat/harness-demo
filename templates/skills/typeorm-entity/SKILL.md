@@ -5,7 +5,7 @@ description: "Create TypeORM entities, relations, and migrations for SQL databas
 
 # TypeORM Entity
 
-Create TypeORM entities, relations, and migrations.
+Create TypeORM entities, relations, and migrations with NestJS integration.
 
 ## When to use
 
@@ -22,6 +22,24 @@ File: `entities/<EntityName>.ts`
 - Add indexes on frequently queried columns
 - Use enum types for constrained values
 - Add createdAt/updatedAt with @CreateDateColumn/@UpdateDateColumn
+
+### NestJS Integration
+
+Register entity in module:
+```typescript
+@Module({
+  imports: [TypeOrmModule.forFeature([EntityName])],
+  // ...
+})
+```
+
+Inject repository in service:
+```typescript
+constructor(
+  @InjectRepository(EntityName)
+  private readonly repo: Repository<EntityName>,
+) {}
+```
 
 ### Migration
 

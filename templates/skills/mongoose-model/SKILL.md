@@ -5,7 +5,7 @@ description: "Create Mongoose schemas, models, and indexes for MongoDB"
 
 # Mongoose Model
 
-Create Mongoose schemas and models.
+Create Mongoose schemas and models with NestJS integration.
 
 ## When to use
 
@@ -23,6 +23,24 @@ File: `models/<ModelName>.ts`
 - Use timestamps: { timestamps: true }
 - Add virtual fields for computed properties
 - Add pre/post hooks for lifecycle events
+
+### NestJS Integration
+
+Register schema in module:
+```typescript
+@Module({
+  imports: [MongooseModule.forFeature([{ name: ModelName.name, schema: ModelSchema }])],
+  // ...
+})
+```
+
+Inject model in service:
+```typescript
+constructor(
+  @InjectModel(ModelName.name)
+  private readonly model: Model<ModelDocument>,
+) {}
+```
 
 ### Patterns
 
