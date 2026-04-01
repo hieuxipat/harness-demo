@@ -6,7 +6,9 @@ stages:
 variables:
   PACKAGE_NAME: "templates.tar.gz"
 
-# ── Stage 1: Validate template.json files on every push ──
+# ── Stage 1: Validate template.json files ──
+# - develop: on every push
+# - main: only on version tags
 validate:
   stage: validate
   image: node:20-alpine
@@ -35,9 +37,10 @@ validate:
       fi
       echo "All templates valid"
   rules:
-    - when: always
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
 
-# ── Stage 2: Package templates into tarball ──
+# ── Stage 2: Package templates into tarball (only on version tags from main) ──
 package:
   stage: package
   image: node:20-alpine
@@ -53,7 +56,7 @@ package:
       - $PACKAGE_NAME
     expire_in: 1 week
 
-# ── Stage 3: Upload tarball + create GitLab Release ──
+# ── Stage 3: Upload tarball + create GitLab Release (only on version tags from main) ──
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
