@@ -9,7 +9,7 @@ variables:
 # ── Stage 1: Validate template.json files on every push ──
 validate:
   stage: validate
-  image: node:18-alpine
+  image: node:20-alpine
   script:
     - |
       echo "Validating template.json files..."
@@ -40,7 +40,7 @@ validate:
 # ── Stage 2: Package templates into tarball ──
 package:
   stage: package
-  image: node:18-alpine
+  image: node:20-alpine
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   script:
