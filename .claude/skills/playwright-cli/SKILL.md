@@ -6,11 +6,35 @@ allowed-tools: Bash(playwright-cli:*)
 
 # Browser Automation with playwright-cli
 
+## Prerequisites
+
+playwright-cli MUST be installed globally. If the command is not available, install it:
+
+```bash
+npm install -g @playwright/cli@latest
+```
+
+**IMPORTANT:**
+- NEVER use Playwright MCP or `npx playwright-cli`. Always use the globally installed `playwright-cli` binary.
+- Every `open` command MUST include `--profile=<chrome-profile-path>`.
+
+### First-time setup
+
+On first use (when no `./chrome-profile` directory exists in the project), ask the user:
+
+> "This is the first time using playwright-cli in this project. Where would you like to store the Chrome profile?"
+> - **A)** Use default: `./chrome-profile` (in the project directory)
+> - **B)** Enter a custom path
+
+If the user chooses A, use `./chrome-profile`. If B, use the path they provide. Then create the directory and use it for all subsequent `open` commands with `--profile=<chosen-path>`.
+
+If `./chrome-profile` (or the custom path) already exists, skip this prompt and use it directly.
+
 ## Quick start
 
 ```bash
-# open new browser
-playwright-cli open
+# open new browser (always with persistent profile)
+playwright-cli open --profile=./chrome-profile
 # navigate to a page
 playwright-cli goto https://playwright.dev
 # interact with the page using refs from the snapshot
@@ -28,9 +52,9 @@ playwright-cli close
 ### Core
 
 ```bash
-playwright-cli open
+playwright-cli open --profile=./chrome-profile
 # open and navigate right away
-playwright-cli open https://example.com/
+playwright-cli open https://example.com/ --profile=./chrome-profile
 playwright-cli goto https://playwright.dev
 playwright-cli type "search query"
 playwright-cli click e3
@@ -158,20 +182,15 @@ playwright-cli video-stop video.webm
 ## Open parameters
 ```bash
 # Use specific browser when creating session
-playwright-cli open --browser=chrome
-playwright-cli open --browser=firefox
-playwright-cli open --browser=webkit
-playwright-cli open --browser=msedge
+playwright-cli open --browser=chrome --profile=./chrome-profile
+playwright-cli open --browser=firefox --profile=./chrome-profile
+playwright-cli open --browser=webkit --profile=./chrome-profile
+playwright-cli open --browser=msedge --profile=./chrome-profile
 # Connect to browser via extension
-playwright-cli open --extension
-
-# Use persistent profile (by default profile is in-memory)
-playwright-cli open --persistent
-# Use persistent profile with custom directory
-playwright-cli open --profile=/path/to/profile
+playwright-cli open --extension --profile=./chrome-profile
 
 # Start with config file
-playwright-cli open --config=my-config.json
+playwright-cli open --config=my-config.json --profile=./chrome-profile
 
 # Close the browser
 playwright-cli close
@@ -200,9 +219,7 @@ If `--filename` is not provided, a new snapshot file is created with a timestamp
 
 ```bash
 # create new browser session named "mysession" with persistent profile
-playwright-cli -s=mysession open example.com --persistent
-# same with manually specified profile directory (use when requested explicitly)
-playwright-cli -s=mysession open example.com --profile=/path/to/profile
+playwright-cli -s=mysession open example.com --profile=./chrome-profile
 playwright-cli -s=mysession click e6
 playwright-cli -s=mysession close  # stop a named browser
 playwright-cli -s=mysession delete-data  # delete user data for persistent session
@@ -214,19 +231,10 @@ playwright-cli close-all
 playwright-cli kill-all
 ```
 
-## Local installation
-
-In some cases user might want to install playwright-cli locally. If running globally available `playwright-cli` binary fails, use `npx playwright-cli` to run the commands. For example:
-
-```bash
-npx playwright-cli open https://example.com
-npx playwright-cli click e1
-```
-
 ## Example: Form submission
 
 ```bash
-playwright-cli open https://example.com/form
+playwright-cli open https://example.com/form --profile=./chrome-profile
 playwright-cli snapshot
 
 playwright-cli fill e1 "user@example.com"
@@ -239,7 +247,7 @@ playwright-cli close
 ## Example: Multi-tab workflow
 
 ```bash
-playwright-cli open https://example.com
+playwright-cli open https://example.com --profile=./chrome-profile
 playwright-cli tab-new https://example.com/other
 playwright-cli tab-list
 playwright-cli tab-select 0
@@ -250,7 +258,7 @@ playwright-cli close
 ## Example: Debugging with DevTools
 
 ```bash
-playwright-cli open https://example.com
+playwright-cli open https://example.com --profile=./chrome-profile
 playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli console
@@ -259,7 +267,7 @@ playwright-cli close
 ```
 
 ```bash
-playwright-cli open https://example.com
+playwright-cli open https://example.com --profile=./chrome-profile
 playwright-cli tracing-start
 playwright-cli click e4
 playwright-cli fill e7 "test"
