@@ -6,7 +6,7 @@
 
 Khi bạn clone boilerplate này vào project, bạn sẽ có một **bộ công cụ AI** (Claude Code skills) giúp:
 
-1. **Lấy task từ board** (Notion/Linear) mà không cần mở trình duyệt
+1. **Lấy task từ board** mà không cần mở trình duyệt
 2. **Tự động chia task** thành các user stories vừa đủ nhỏ để implement
 3. **Implement theo TDD** (viết test trước, code sau)
 4. **Review code** bằng agent độc lập (khách quan)
@@ -50,16 +50,60 @@ megamind-{app-name}/
 ### Bước 1: Clone boilerplate
 
 ```bash
-git clone <repo-url> megamind-{app-name}
-cd megamind-{app-name}
+git clone <boilerplate-repo-url> my-workspace-name
+cd my-workspace-name
 ```
 
-### Bước 2: Config `resources.md`
+### Bước 2: Mở Claude Code và chạy `/init-workspace`
 
-Mở file `resources.md` và điền thông tin project:
+```bash
+claude
+```
+
+Trong Claude Code, gõ:
 
 ```
-APP_NAME="Tên App Của Bạn"          # Bắt buộc
+/init-workspace
+```
+
+Skill sẽ hỏi bạn:
+1. **Workspace name** — vd: `ordertracking-workspace`
+2. **GitLab remote URL** — vd: `git@gitlab.com:megamind/ordertracking-workspace.git`
+3. **App name** — vd: `Order Tracking`
+4. **Subprojects** — các dự án con cần kéo vào workspace:
+   ```
+   backend  → git@gitlab.com:megamind/ordertracking-backend.git
+   frontend → git@gitlab.com:megamind/ordertracking-frontend.git
+   done
+   ```
+
+Skill sẽ tự động:
+- Xoá git history cũ của boilerplate
+- Cấu hình `.gitignore` để ignore các subproject
+- Init git mới và push lên remote của team
+- Clone các subproject vào workspace
+- Đổi tên thư mục theo workspace name
+- Tự xoá skill (chỉ cần chạy 1 lần)
+
+**Kết quả:**
+
+```
+ordertracking-workspace/          ← workspace git (skills, docs, config)
+├── .claude/skills/               ← 16 skills
+├── docs/
+├── e2e-tests/
+├── resources.md
+├── CLAUDE.md
+├── backend/                      ← git repo riêng
+├── frontend/                     ← git repo riêng
+└── .gitignore                    ← ignore backend/, frontend/
+```
+
+### Bước 3: Config `resources.md`
+
+Mở file `resources.md` và điền thêm các thông tin còn lại:
+
+```
 TASK_LIST_URL=https://...           # URL task board (Notion/Linear)
 LARK_NOTIFY_URL=https://...         # Lark Bot webhook
 APP_URL=https://...                 # URL app để test
@@ -68,14 +112,7 @@ SONARQUBE_KEY=xxx                   # SonarQube project key
 FIGMA_URL=https://...               # Figma design (nếu có)
 ```
 
-> **Lưu ý:** `APP_NAME` là bắt buộc. Các field khác tuỳ chọn — nhưng skill liên quan sẽ không hoạt động nếu thiếu config tương ứng.
-
-### Bước 3: Thêm code project
-
-Đặt code vào các thư mục tương ứng:
-- `backend/` — NestJS app
-- `frontend/` — React admin app
-- `storefront/` — Theme extension
+> **Lưu ý:** `APP_NAME` đã được set bởi `/init-workspace`. Các field khác tuỳ chọn — nhưng skill liên quan sẽ không hoạt động nếu thiếu config tương ứng.
 
 ### Bước 4: Dùng Claude Code
 

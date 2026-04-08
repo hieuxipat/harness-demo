@@ -5,11 +5,11 @@ Boilerplate workspace cho các dự án trong division Megamind. Mỗi project c
 ## Workspace Structure
 
 ```
-megamind-{app-name}/
-├── .claude/skills/           # 16 skills (xem bên dưới)
-├── backend/                  # NestJS app
-├── frontend/                 # React admin app (embedded Shopify)
-├── storefront/               # Theme extension / storefront widget
+{workspace-name}/
+├── .claude/skills/           # Skills (xem bên dưới)
+├── backend/                  # Subproject — git repo riêng (ignored by workspace git)
+├── frontend/                 # Subproject — git repo riêng (ignored by workspace git)
+├── storefront/               # Subproject — git repo riêng (ignored by workspace git)
 ├── docs/
 │   ├── {FEATURE_FLAG}/
 │   │   ├── user-stories/     # PO viết
@@ -34,7 +34,10 @@ Trước khi dùng bất kỳ skill nào, config `resources.md`:
 - `APP_URL` — App URL để test
 - `SONARQUBE_TOKEN` / `SONARQUBE_KEY` — SonarQube auth
 
-## Skills (16 total)
+## Skills (17 total)
+
+### Setup
+- `/init-workspace` — Khởi tạo workspace mới từ boilerplate (chạy 1 lần, tự xoá sau khi xong)
 
 ### Orchestrators
 - `/task-flow` — Workflow chính cho feature (fullstack/backend/frontend/storefront)
