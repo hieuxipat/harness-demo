@@ -118,10 +118,60 @@ Unit tests + SonarQube scan + story coverage check. Phải pass trước khi com
 ### Frontend:  [1] → [2] → [3] → loop([4] [5]) → [8] → [9] → [10]
 ### Storefront: [1] → [2] → [3] → loop([4] [5]) → [8] → [10]
 
+## Error Recovery & Resume
+
+### Checkpoint tracking
+
+Registry là checkpoint tự nhiên. Khi fail ở bất kỳ step nào, tiến độ đã được ghi:
+- `manifest.yaml` → biết stories nào đã done, đang implementing
+- `registry.yaml` → biết stories_done, tests_total
+- User story files → biết story nào đã `done`, đang `implementing`, còn `approved`
+
+### Resume sau khi fail
+
+Khi user gọi lại `/task-flow` cho cùng feature:
+
+1. **Đọc manifest.yaml** — kiểm tra `feature.status`:
+   - `draft` → chưa bắt đầu, chạy từ Step [2]
+   - `approved` → đã break-task, chưa implement → chạy từ Step [3]
+   - `in-progress` → đang implement → tìm story đầu tiên chưa `done`, resume loop [4-6]
+   - `review` → implement xong, đang test → resume từ Step [7] hoặc [8]
+   - `done` → đã hoàn thành, hỏi user muốn làm gì tiếp
+
+2. **Thông báo user**:
+   > "Feature `{FEATURE_FLAG}` đang ở trạng thái `{status}`.
+   > Tiến độ: {stories_done}/{stories_total} stories done.
+   > Bạn muốn tiếp tục từ bước hiện tại, hay chạy lại từ đầu?"
+
+3. **Nếu tiếp tục** → skip các step đã hoàn thành, bắt đầu từ step phù hợp
+
+### Khi 1 story fail giữa loop
+
+Nếu `/implement` hoặc `/review-code` fail cho 1 story:
+
+1. Story đang implement giữ status `implementing` (chưa chuyển `done`)
+2. Hỏi user:
+   > "Story US-xxx gặp lỗi. Bạn muốn:
+   > 1. Retry story này
+   > 2. Skip story này, tiếp tục stories còn lại
+   > 3. Dừng workflow, xử lý manual"
+3. Nếu skip → ghi note vào `manifest.yaml` history: "US-xxx skipped — {lý do}"
+4. Workflow tiếp tục với stories còn lại
+
+### Chuyển từ hotfix-flow sang task-flow
+
+Nếu `/hotfix-flow` phát hiện scope lớn:
+
+1. Hotfix-flow **giữ nguyên code đã viết** (không revert)
+2. Tạo feature registry mới cho hotfix: `docs/features/{HOTFIX_FLAG}/`
+3. Chuyển sang `/task-flow` với `feature.status: in-progress` (skip step [1], [2])
+4. Task-flow đọc manifest → thấy đã có code → resume từ Step [5] (review)
+
 ## Nguyên tắc
 
 - Mỗi bước phải hoàn thành và được user confirm trước khi sang bước tiếp
-- Nếu bất kỳ bước nào fail, dừng lại và xử lý trước khi tiếp tục
+- Nếu bất kỳ bước nào fail → dừng, hỏi user cách xử lý (retry/skip/stop)
 - User có quyền skip bất kỳ bước nào nếu họ yêu cầu — nhưng luôn hỏi xác nhận
 - Không bao giờ tự ý bypass quality gate
 - **Registry phải luôn up-to-date** — mỗi skill tự cập nhật phần mình khi hoàn thành
+- **Resume-friendly** — đọc registry trước khi bắt đầu, skip steps đã hoàn thành

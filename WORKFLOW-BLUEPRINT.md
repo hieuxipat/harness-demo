@@ -9,16 +9,22 @@ Mỗi dự án trong division Megamind sử dụng boilerplate này như **1 wor
 ```
 megamind-{app-name}/
 ├── .claude/
-│   ├── skills/                 # Tất cả skills
+│   ├── skills/                 # 17 skills (xem Section 3)
 │   ├── settings.local.json     # Config cụ thể cho project
 │   └── command/                # Custom commands (nếu có)
-├── backend/                    # NestJS app
-├── frontend/                   # React admin app (embedded Shopify)
-├── storefront/                 # Theme extension / storefront widget
+├── backend/                    # NestJS app (git repo riêng)
+├── frontend/                   # React admin app (git repo riêng)
+├── storefront/                 # Theme extension (git repo riêng)
 ├── docs/
-│   ├── {FEATURE_FLAG}/
-│   │   ├── user-stories/       # PO viết
-│   │   └── test-cases/         # Tester viết
+│   ├── registry.yaml           # Master index — tất cả features
+│   ├── features/               # Feature Registry (mỗi feature 1 folder)
+│   │   └── {FEATURE_FLAG}/
+│   │       ├── manifest.yaml           # Metadata: owner, status, version
+│   │       ├── user-stories/           # US-001.md, US-002.md,...
+│   │       ├── test-cases/             # TC-001.md + coverage-matrix.md
+│   │       └── decisions/              # ADR-001.md
+│   ├── templates/              # Templates chuẩn (user-story, test-case, manifest, ADR)
+│   ├── REGISTRY-CONTRACT.md    # Quy tắc concurrent access cho multi-dev
 │   └── app-discovery/          # Thông tin app
 ├── e2e-tests/                  # Playwright E2E tests
 ├── chrome-profile/             # Persistent browser profile
@@ -43,99 +49,90 @@ FIGMA_URL=                        # Figma design URL (nếu có)
 
 ---
 
-## 2. Phân tích so sánh: Xipat Workflow vs Megamind Boilerplate
+## 2. Lịch sử phát triển: Xipat Workflow → Megamind Boilerplate
 
-### 2.1 Skills hiện có trong megamind (8 skills, tất cả đều trống)
+### 2.1 Nguồn gốc
 
-| Skill hiện tại | Tương đương Xipat | Nhận xét |
+Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem `xipat-workflow/README.md`). Quá trình chuyển đổi:
+
+| Xipat (22 skills) | Megamind (17 skills) | Thay đổi |
 |---|---|---|
-| `task-explorer` | `dev-task-explore` | Giữ, đổi tên cho nhất quán |
-| `break-task` | `dev-task-break` | Giữ, cần cải thiện cơ chế đánh giá "đủ nhỏ" |
-| `implement-user-story` | `dev-test-driven-development` | Giữ, tên tốt hơn Xipat vì focus vào user story |
-| `test-driven-development` | `dev-test-driven-development` | **Trùng mục đích** với `implement-user-story` → gộp |
-| `e2e-test` | `dev-e2e-test` | Giữ |
-| `explorer-flow-app` | Không có | Mới - khám phá codebase hiện tại |
-| `playwright-cli` | `playwright-cli` (shared) | Giữ - reference skill |
-| `ui-shopify` | `shopify-design-guideline` + `ui-ux-pro-max` | Giữ, gộp 2 skill Xipat thành 1 |
+| `dev-task-explore` | `explore-task` | Đổi tên, thêm filter + lưu file markdown |
+| `dev-task-break` | `break-task` | Thêm Readiness Score, tạo Feature Registry |
+| `dev-test-driven-development` | `implement` | Rút gọn tên, thêm registry integration |
+| `dev-code-rules` | `explore-codebase` | Mở rộng cho storefront |
+| `dev-code-review` | `review-code` | Thêm AC verification |
+| `dev-docs-api` | `docs-api` | Giữ nguyên |
+| `dev-e2e-test` | `test-e2e` | Thêm TC file output, coverage matrix |
+| `dev-integration-test` | `test-integration` | Thêm TC file output, coverage matrix |
+| `dev-quality-gate` + `dev-sonar-check` | `check-quality` | Gộp 2 thành 1, thêm story coverage check |
+| `dev-task-flow` | `task-flow` | Thêm Feature Registry, error recovery, resume |
+| *(không có)* | `hotfix-flow` | **Mới** — orchestrator rút gọn |
+| *(không có)* | `init-workspace` | **Mới** — one-time setup |
+| *(không có)* | `notify` | **Mới** — extract notification logic |
+| `playwright-cli` | `playwright-cli` | Giữ nguyên |
+| `shopify-design-guideline` + `ui-ux-pro-max` | `ui-shopify` | Gộp 2 thành 1 |
+| `swagger` | `swagger-ref` | Giữ nguyên |
+| *(không có)* | `larkbot-ref` | **Mới** — quick reference |
 
-### 2.2 Skills Xipat có mà Megamind THIẾU (cần bổ sung)
-
-| Skill Xipat | Tại sao cần | Mức ưu tiên |
-|---|---|---|
-| `dev-code-rules` | Scan conventions trước khi code → tránh viết sai pattern | **Cao** |
-| `dev-code-review` | Review bằng agent riêng → phát hiện lỗi trước commit | **Cao** |
-| `dev-docs-api` | Swagger decorators cho NestJS API | **Cao** (nếu có BE) |
-| `dev-code-quality` | SonarQube + coverage gate | **Trung bình** |
-| `dev-task-flow` | Orchestrator điều phối workflow | **Cao** |
-| `larkbot` (reference) | Notification cho team | **Trung bình** |
-| `swagger` (reference) | OpenAPI reference | **Trung bình** |
-| `dev-test-case-check` | Kiểm tra tester đã viết test case chưa | **Thấp** - có thể gộp vào flow |
-| `dev-integration-test` | Test controller→service→DB | **Trung bình** |
-
-### 2.3 Skills Xipat KHÔNG cần cho Megamind
-
-| Skill | Lý do bỏ |
-|---|---|
-| `tester-task-flow` | Megamind focus dev workflow, tester có flow riêng |
-| `tester-task-explore` | Tương tự |
-| `tester-write-test-cases` | Tương tự |
-| `tester-test-api` | Gộp concept vào `integration-test` |
-| `dev-eni-test` (gateway) | Không cần skill riêng chỉ để route, logic này nằm trong orchestrator |
-| `dev-sonar-check` | Gộp vào `code-quality` luôn |
-| `dev-quality-gate` | Gộp vào `code-quality` luôn |
+**Loại bỏ từ Xipat:** Tester workflow (4 skills), gateway skills (`dev-eni-test`, `dev-code-quality`), duplicate (`implement-user-story` vs `test-driven-development`)
 
 ---
 
-## 3. Thiết kế danh sách Skills mới
+## 3. Danh sách Skills (17 skills)
 
 ### 3.1 Quy tắc đặt tên
 
 **Format:** `{action}-{object}` — ngắn gọn, verb-first, không prefix `dev-`/`tester-`
 
-Lý do: Megamind chỉ có 1 workflow cho dev, không cần phân biệt role trong tên skill.
+### 3.2 Skills theo nhóm
 
-### 3.2 Danh sách Skills đề xuất (16 skills)
-
-#### Nhóm A: Orchestrators (2 skills)
+#### Nhóm A: Setup (1 skill)
 
 | # | Skill | Mục đích | Khi nào dùng |
 |---|---|---|---|
-| A1 | **`task-flow`** | Orchestrator chính cho feature đầy đủ | Làm feature mới |
-| A2 | **`hotfix-flow`** | Orchestrator rút gọn cho hotfix | Fix bug gấp |
+| A1 | **`init-workspace`** | Khởi tạo workspace mới từ boilerplate | Chạy 1 lần sau clone (tự xoá) |
 
-#### Nhóm B: Task Analysis (3 skills)
-
-| # | Skill | Mục đích | Khi nào dùng |
-|---|---|---|---|
-| B1 | **`explore-task`** | Lấy task từ board (Notion/Linear) | Cần lấy task từ board |
-| B2 | **`break-task`** | Phân tích & chia user stories | Nhận task mới, cần planning |
-| B3 | **`explore-codebase`** | Khám phá app hiện tại (structure, patterns, conventions) | Onboard dự án mới hoặc trước khi code |
-
-#### Nhóm C: Implementation (3 skills)
+#### Nhóm B: Orchestrators (2 skills)
 
 | # | Skill | Mục đích | Khi nào dùng |
 |---|---|---|---|
-| C1 | **`implement`** | TDD implementation (Red→Green→Refactor) | Implement user story |
-| C2 | **`review-code`** | Code review bằng agent riêng | Sau implement, trước commit |
-| C3 | **`docs-api`** | Swagger/OpenAPI decorators | Sau implement BE endpoints |
+| B1 | **`task-flow`** | Orchestrator chính cho feature, có error recovery + resume | Làm feature mới |
+| B2 | **`hotfix-flow`** | Orchestrator rút gọn cho hotfix, có scope escalation | Fix bug gấp |
 
-#### Nhóm D: Testing (3 skills)
+#### Nhóm C: Task Analysis (3 skills)
 
 | # | Skill | Mục đích | Khi nào dùng |
 |---|---|---|---|
-| D1 | **`test-e2e`** | E2E test trên browser (Playwright) | Task có FE hoặc Storefront |
-| D2 | **`test-integration`** | Integration test (controller→service→DB) | Task có BE |
-| D3 | **`check-quality`** | SonarQube scan + coverage gate | Trước commit |
+| C1 | **`explore-task`** | Lấy task từ board (Notion/Linear/Lark/Jira), filter + lưu file | Cần lấy task từ board |
+| C2 | **`break-task`** | Phân tích & chia user stories, tạo Feature Registry | Nhận task mới, cần planning |
+| C3 | **`explore-codebase`** | Khám phá app hiện tại (structure, patterns, conventions) | Onboard dự án mới hoặc trước khi code |
 
-#### Nhóm E: Reference/Shared (5 skills)
+#### Nhóm D: Implementation (3 skills)
+
+| # | Skill | Mục đích | Khi nào dùng |
+|---|---|---|---|
+| D1 | **`implement`** | TDD implementation, đọc/ghi registry | Implement user story |
+| D2 | **`review-code`** | Code review bằng agent riêng, verify AC | Sau implement, trước commit |
+| D3 | **`docs-api`** | Swagger/OpenAPI decorators | Sau implement BE endpoints |
+
+#### Nhóm E: Testing (3 skills)
+
+| # | Skill | Mục đích | Khi nào dùng |
+|---|---|---|---|
+| E1 | **`test-e2e`** | E2E test trên browser, tạo TC files + coverage matrix | Task có FE hoặc Storefront |
+| E2 | **`test-integration`** | Integration test, tạo TC files + coverage matrix | Task có BE |
+| E3 | **`check-quality`** | Unit test + SonarQube + story coverage check | Trước commit |
+
+#### Nhóm F: Reference/Shared (5 skills)
 
 | # | Skill | Mục đích | Dùng bởi |
 |---|---|---|---|
-| E1 | **`playwright-cli`** | Playwright CLI reference | `explore-task`, `test-e2e` |
-| E2 | **`ui-shopify`** | Shopify Polaris + UI/UX design system | `implement`, `explore-codebase` |
-| E3 | **`swagger-ref`** | OpenAPI/Swagger reference | `docs-api` |
-| E4 | **`larkbot-ref`** | Lark messaging reference | `task-flow`, `review-code` |
-| E5 | **`notify`** | Gửi notification qua Larkbot | Bất kỳ skill nào cần thông báo |
+| F1 | **`playwright-cli`** | Playwright CLI reference | `explore-task`, `test-e2e` |
+| F2 | **`ui-shopify`** | Shopify Polaris + UI/UX design system | `implement`, `explore-codebase` |
+| F3 | **`swagger-ref`** | OpenAPI/Swagger reference | `docs-api` |
+| F4 | **`larkbot-ref`** | Lark messaging reference | `notify` |
+| F5 | **`notify`** | Gửi notification qua Larkbot, đọc registry cho summary | Bất kỳ skill nào cần thông báo |
 
 ---
 
@@ -340,333 +337,372 @@ e2e-tests/
 ```
 .claude/skills/
 │
+├── ── Setup ──
+├── init-workspace/
+│   └── SKILL.md              # One-time workspace setup (tự xoá sau)
+│
 ├── ── Orchestrators ──
 ├── task-flow/
-│   └── SKILL.md              # Main workflow orchestrator
+│   └── SKILL.md              # Main workflow + error recovery + resume
 ├── hotfix-flow/
-│   └── SKILL.md              # Hotfix workflow
+│   └── SKILL.md              # Hotfix workflow + scope escalation
 │
 ├── ── Task Analysis ──
 ├── explore-task/
-│   └── SKILL.md              # Lấy task từ board
+│   └── SKILL.md              # Lấy task từ board, filter, lưu file
 ├── break-task/
-│   └── SKILL.md              # Phân tích & chia user stories
+│   └── SKILL.md              # Chia user stories + tạo Feature Registry
 ├── explore-codebase/
-│   └── SKILL.md              # Khám phá codebase
+│   └── SKILL.md              # Khám phá codebase conventions
 │
 ├── ── Implementation ──
 ├── implement/
-│   └── SKILL.md              # TDD implementation
+│   └── SKILL.md              # TDD + registry integration
 ├── review-code/
-│   └── SKILL.md              # Code review bằng agent
+│   └── SKILL.md              # Code review + AC verification
 ├── docs-api/
 │   └── SKILL.md              # Swagger decorators
 │
 ├── ── Testing ──
 ├── test-e2e/
-│   └── SKILL.md              # E2E Playwright tests
+│   └── SKILL.md              # E2E test + TC files + coverage matrix
 ├── test-integration/
-│   └── SKILL.md              # Integration tests
+│   └── SKILL.md              # Integration test + TC files + coverage matrix
 ├── check-quality/
-│   └── SKILL.md              # SonarQube + coverage
+│   └── SKILL.md              # Unit test + SonarQube + story coverage
 │
 ├── ── Reference ──
 ├── playwright-cli/
 │   ├── SKILL.md              # Playwright CLI guide
 │   └── references/
-│       ├── running-code.md
-│       ├── session-management.md
 │       └── ...
 ├── ui-shopify/
 │   ├── SKILL.md              # Shopify Polaris + UI/UX
 │   └── references/
-│       ├── polaris-patterns.md
-│       └── design-system.md
+│       ├── index.md
+│       ├── apps.md           # App design guidelines (40KB)
+│       └── llms.md           # Shopify dev platform reference (94KB)
 ├── swagger-ref/
-│   ├── SKILL.md
+│   ├── SKILL.md              # OpenAPI/Swagger reference
 │   └── references/
-│       └── openapi-spec.md
+│       ├── index.md
+│       ├── specification.md  # OpenAPI spec (372KB)
+│       ├── api.md            # Swagger API tools (58KB)
+│       ├── open-source-tools.md  # OSS tools (157KB)
+│       └── other.md
 ├── larkbot-ref/
 │   └── SKILL.md              # Lark message format
 └── notify/
-    └── SKILL.md              # Send notifications
+    └── SKILL.md              # Notifications, đọc registry cho summary
 ```
 
 ---
 
-## 8. Nội dung tóm tắt mỗi Skill (SKILL.md outline)
+## 8. Nội dung tóm tắt mỗi Skill
 
-### A1. task-flow (Orchestrator)
+### A1. init-workspace
 
 ```
-Trigger: /task-flow
-Input: --scope (fullstack|backend|frontend|storefront)
+Trigger: /init-workspace (chạy 1 lần, tự xoá sau)
 Logic:
-  1. Hỏi scope nếu chưa có
-  2. explore-task (tuỳ chọn - hỏi user có cần không)
-  3. break-task → output user stories với readiness score
-  4. explore-codebase → scan conventions theo scope
-  5. Loop mỗi user story READY:
-     a. implement (TDD)
-     b. review-code
-     c. docs-api (nếu scope có backend)
-  6. test-integration (nếu scope có backend)
-  7. test-e2e (nếu scope có frontend hoặc storefront)
-  8. check-quality
-  9. Commit
-  10. notify (Larkbot)
+  1. Hỏi workspace name, GitLab remote, app name, subprojects
+  2. Xoá git history boilerplate → init git mới
+  3. Clone subprojects (backend, frontend, storefront)
+  4. Config .gitignore, resources.md
+  5. Push lên remote → tự xoá skill
 ```
 
-### A2. hotfix-flow
+### B1. task-flow (Orchestrator)
+
+```
+Trigger: /task-flow --scope (fullstack|backend|frontend|storefront)
+Registry: Đọc manifest.yaml để resume nếu feature đang in-progress
+Logic:
+  1. explore-task (tuỳ chọn)
+  2. break-task → tạo Feature Registry + user stories với readiness score
+  3. explore-codebase → scan conventions theo scope
+  4-6. Loop mỗi user story READY:
+     a. implement (TDD) → cập nhật story status + registry
+     b. review-code → verify AC
+     c. docs-api (nếu scope có backend)
+  7. test-integration → tạo TC files + coverage matrix (nếu có backend)
+  8. test-e2e → tạo TC files + coverage matrix (nếu có frontend/storefront)
+  9. check-quality → unit test + SonarQube + story coverage check
+  10. Finalize → cập nhật manifest + registry → commit → notify
+Error Recovery:
+  - Resume từ bước cuối dựa trên manifest.status
+  - Story fail: retry / skip / stop (user chọn)
+  - Hotfix escalation: giữ progress, tạo registry, chuyển task-flow
+```
+
+### B2. hotfix-flow
 
 ```
 Trigger: /hotfix-flow
-Input: Bug description hoặc issue link
 Logic:
   1. explore-codebase → tìm root cause
-  2. implement → fix + test
+  2. implement → fix + test (TDD)
   3. review-code → quick review
   4. check-quality
-  5. Commit (conventional: fix: ...)
-  6. notify (URGENT flag)
+  5. Commit (fix: ...) → notify (URGENT)
+Scope escalation:
+  - Nếu scope lớn → tạo Feature Registry → chuyển sang task-flow (giữ code đã viết)
 ```
 
-### B1. explore-task
+### C1. explore-task
 
 ```
 Trigger: /explore-task
-Cơ chế: Playwright mở TASK_LIST_URL → scrape task list → user chọn
-Output: Task info (title, description, assignee, status, feature flag)
-Lấy từ Xipat: dev-task-explore (copy logic Playwright scraping)
+Config: TASK_LIST_URL từ resources.md
+Logic:
+  1. Filter selection: pending / upcoming (5 ngày) / custom / tất cả chưa done
+  2. Playwright mở board, filter by logged-in Assignee
+  3. Thu thập task details (ID, title, status, assignee, due, priority, feature flag)
+  4. Lưu mỗi task thành ./tasks/{TASK-ID}.md
+  5. Hiển thị bảng tóm tắt → user chọn task
 ```
 
-### B2. break-task
+### C2. break-task
 
 ```
 Trigger: /break-task
 Input: Task description hoặc output từ explore-task
+Registry output:
+  1. Tạo docs/features/{FEATURE_FLAG}/ (manifest.yaml, user-stories/, test-cases/, decisions/)
+  2. Tạo US-xxx.md cho mỗi story (frontmatter: id, status, priority, complexity)
+  3. Tạo coverage-matrix.md skeleton
+  4. Cập nhật docs/registry.yaml
 Logic:
-  1. Đọc user stories từ docs/{FEATURE_FLAG}/user-stories/ (nếu có)
-  2. Phân tích task → chia user stories
-  3. Mỗi story đánh giá:
-     - Scope (BE/FE/Storefront)
-     - Complexity (S/M/L)
-     - Dependencies
-     - Readiness: ✅ READY hoặc ⚠️ NEEDS BREAKDOWN
-  4. Stories NEEDS BREAKDOWN → tự động chia tiếp
-  5. Sắp xếp theo: dependencies → risk (cao trước) → scope
-  6. User confirm
-Output: Danh sách user stories có readiness score
+  1. Đọc user stories từ PO (nếu có)
+  2. Verify Figma design (nếu có)
+  3. Chia user stories + đánh giá Readiness Score
+  4. Auto-breakdown stories NEEDS BREAKDOWN
+  5. Sắp xếp: dependencies → risk → scope
+  6. Cập nhật manifest + registry
+  7. User confirm
 ```
 
-### B3. explore-codebase
+### C3. explore-codebase
 
 ```
 Trigger: /explore-codebase [--path <subdir>]
 Logic:
   1. Scan directory structure
-  2. Xác định patterns:
-     - Backend: module structure, service pattern, DTO, entities, error handling
-     - Frontend: component structure, state management, routing, styling
-     - Storefront: theme structure, Liquid/JS patterns
+  2. Xác định patterns (Backend/Frontend/Storefront)
   3. Detect tech stack & versions
   4. Summarize conventions
 Output: Markdown report conventions
-Lấy từ Xipat: dev-code-rules (nhưng mở rộng cho storefront)
 ```
 
-### C1. implement
+### D1. implement
 
 ```
 Trigger: /implement
 Input: User story (từ break-task hoặc manual)
+Registry integration:
+  - Đọc manifest.yaml + US-xxx.md để lấy AC
+  - Cập nhật story status: implementing → done
+  - Cập nhật registry: stories_done
 Logic:
-  1. Đọc conventions từ explore-codebase (nếu đã chạy)
-  2. Đọc test cases từ docs/{FEATURE_FLAG}/test-cases/ (nếu có)
-  3. TDD cycle cho mỗi acceptance criteria:
-     a. RED: Viết test fail
-     b. GREEN: Code tối thiểu pass
-     c. REFACTOR: Clean up, giữ test pass
-  4. User confirm mỗi cycle
-Lấy từ Xipat: dev-test-driven-development (giữ nguyên TDD core)
+  1. Đọc conventions + manifest + user story + test cases
+  2. TDD cycle: RED → verify fail → GREEN → verify pass → REFACTOR
+  3. User confirm mỗi cycle
+  4. Sau xong: cập nhật US-xxx.md (status, AC checkboxes) + manifest + registry
 ```
 
-### C2. review-code
+### D2. review-code
 
 ```
 Trigger: /review-code
+Registry integration:
+  - Agent nhận manifest + user stories + coverage matrix
+  - Verify code match acceptance criteria → Blocker nếu AC chưa covered
 Logic:
   1. Spawn sub-agent reviewer
-  2. Agent đọc git diff (staged + unstaged)
+  2. Agent đọc git diff + manifest + AC
   3. Phân loại: 🔴 Blocker | 🟡 Warning | 🔵 Suggestion
-  4. Trình bày cho user
-  5. User chọn fix items nào
-  6. Fix → report
-Lấy từ Xipat: dev-code-review (giữ nguyên cơ chế agent riêng)
+  4. User chọn fix items → fix → report
+  5. Cập nhật manifest history nếu có fix
 ```
 
-### C3. docs-api
+### D3. docs-api
 
 ```
 Trigger: /docs-api
-Logic:
-  1. Tìm changed controllers & DTOs: git diff -- backend/
-  2. Thêm Swagger decorators: @ApiTags, @ApiOperation, @ApiResponse, @ApiProperty
-  3. Follow conventions từ code hiện tại
-  4. Verify: no TS errors, all endpoints documented
+Logic: Tìm changed controllers & DTOs → thêm Swagger decorators → verify
 Reference: /swagger-ref
-Lấy từ Xipat: dev-docs-api (giữ nguyên)
 ```
 
-### D1. test-e2e
+### E1. test-e2e
 
 ```
 Trigger: /test-e2e
-Điều kiện: Task có frontend hoặc storefront
+Registry integration:
+  - Đọc coverage matrix → tìm stories chưa có E2E test
+  - Tạo TC-xxx.md (type: e2e, covers: [US-xxx])
+  - Cập nhật coverage-matrix.md + registry
 Logic:
-  1. Xác định scope: admin | storefront | cả hai
-  2. Gather test scenarios từ user stories + test cases
-  3. Confirm danh sách scenarios với user
-  4. Với mỗi scenario: Playwright open → navigate → interact → screenshot → verify
-  5. Report: pass/fail + screenshots
-Tool: /playwright-cli
-Lấy từ Xipat: dev-e2e-test (giữ nguyên, thêm storefront support)
+  1. Gather scenarios từ user stories + test cases
+  2. Playwright: open → navigate → interact → screenshot → verify
+  3. Tạo TC files + cập nhật coverage matrix
+  4. Report với traceability (TC-E01 → US-001/AC-2)
 ```
 
-### D2. test-integration
+### E2. test-integration
 
 ```
 Trigger: /test-integration
-Điều kiện: Task có backend
+Registry integration: Tương tự test-e2e (tạo TC files, cập nhật coverage matrix)
 Logic:
   1. Define scope: endpoints + modules
-  2. Viết integration tests (*.integration.spec.ts)
-  3. Real test DB, chỉ mock external services
-  4. Run: npx jest --testPathPattern=integration --coverage
-  5. Report
-Lấy từ Xipat: dev-integration-test (giữ nguyên)
+  2. TDD: viết integration tests (*.integration.spec.ts)
+  3. Real DB, chỉ mock external services
+  4. Tạo TC files + cập nhật coverage matrix
+  5. Report với traceability
 ```
 
-### D3. check-quality
+### E3. check-quality
 
 ```
 Trigger: /check-quality
+Registry integration:
+  - Đọc coverage-matrix → cảnh báo stories chưa có test
+  - Cập nhật registry: tests_pass, coverage
 Logic:
-  1. Unit tests: npx jest --coverage (target >70%)
-  2. SonarQube scan: npm run sonar
-  3. Check results qua API:
-     - 0 Blocker, 0 Critical
-     - Coverage > threshold
+  1. Unit tests: npx jest --coverage (>70%)
+  2. SonarQube scan + check results (0 Blocker, 0 Critical)
+  3. Story coverage check (recommend ≥80%)
   4. Fix loop (max 3 rounds)
-  5. Report
-Lấy từ Xipat: dev-quality-gate + dev-sonar-check (gộp thành 1)
+  5. Report: tests + SonarQube + story coverage
 ```
 
-### E1-E5. Reference skills
+### F1-F5. Reference & Shared skills
 
-| Skill | Nội dung | Nguồn |
+| Skill | Nội dung | Reference files |
 |---|---|---|
-| `playwright-cli` | Full Playwright CLI guide + references | Copy từ Xipat (đã đầy đủ) |
-| `ui-shopify` | Shopify Polaris patterns + UI/UX design system | Gộp `shopify-design-guideline` + `ui-ux-pro-max` từ Xipat |
-| `swagger-ref` | OpenAPI 3.0 spec reference | Copy từ Xipat `swagger` |
-| `larkbot-ref` | Lark message format & examples | Copy từ Xipat `larkbot.md` |
-| `notify` | Logic gửi notification qua Larkbot webhook | Mới - extract từ các skill Xipat dùng Larkbot |
+| `playwright-cli` | Playwright CLI guide | references/ (commands, sessions, etc.) |
+| `ui-shopify` | Shopify Polaris + UI/UX design | references/apps.md (40KB), llms.md (94KB) |
+| `swagger-ref` | OpenAPI/Swagger reference | references/specification.md (372KB), api.md (58KB), etc. |
+| `larkbot-ref` | Lark message format | Cross-ref larkbot.md |
+| `notify` | Gửi notification, đọc registry cho summary | 4 types: completed, urgent, missing stories, review request |
 
 ---
 
 ## 9. Skill dependency map
 
 ```
-task-flow (orchestrator)
-├── explore-task ──────→ playwright-cli (ref)
-├── break-task
-├── explore-codebase ──→ ui-shopify (ref, nếu Shopify app)
-├── implement
-├── review-code
-├── docs-api ──────────→ swagger-ref (ref)
-├── test-integration
-├── test-e2e ──────────→ playwright-cli (ref)
-├── check-quality
-└── notify ────────────→ larkbot-ref (ref)
+task-flow (orchestrator)                          Feature Registry
+├── explore-task ──────→ playwright-cli (ref)      │
+├── break-task ────────────────────────────────→ CREATES registry
+├── explore-codebase ──→ ui-shopify (ref)          │
+├── implement ─────────────────────────────────→ UPDATES story status
+├── review-code ───────────────────────────────→ READS AC from stories
+├── docs-api ──────────→ swagger-ref (ref)         │
+├── test-integration ──────────────────────────→ CREATES TC files
+├── test-e2e ──────────→ playwright-cli (ref) ─→ CREATES TC files
+├── check-quality ─────────────────────────────→ READS coverage matrix
+└── notify ────────────→ larkbot-ref (ref) ────→ READS registry summary
 
 hotfix-flow (orchestrator)
 ├── explore-codebase
-├── implement
+├── implement ─────────────────────────────────→ (no registry unless escalated)
 ├── review-code
 ├── check-quality
 └── notify ────────────→ larkbot-ref (ref)
+    ↓ (scope escalation)
+    → task-flow (tạo registry, resume từ review)
 ```
 
 ---
 
-## 10. So sánh trước/sau
+## 10. Feature Registry System
 
-### Skills megamind hiện tại → đề xuất
+### 10.1 Tổng quan
 
-| Hiện tại (8, trống) | Đề xuất (16) | Thay đổi |
-|---|---|---|
-| `task-explorer` | `explore-task` | Đổi tên (verb-first) |
-| `break-task` | `break-task` | Giữ nguyên, thêm readiness score |
-| `implement-user-story` | `implement` | Rút gọn tên |
-| `test-driven-development` | *(gộp vào implement)* | Xoá - TDD là cơ chế bên trong `implement` |
-| `e2e-test` | `test-e2e` | Đổi tên (nhóm test- prefix) |
-| `explorer-flow-app` | `explore-codebase` | Đổi tên rõ nghĩa hơn |
-| `playwright-cli` | `playwright-cli` | Giữ nguyên |
-| `ui-shopify` | `ui-shopify` | Giữ nguyên |
-| *(thiếu)* | `task-flow` | **MỚI** - orchestrator chính |
-| *(thiếu)* | `hotfix-flow` | **MỚI** - orchestrator hotfix |
-| *(thiếu)* | `review-code` | **MỚI** - từ Xipat dev-code-review |
-| *(thiếu)* | `docs-api` | **MỚI** - từ Xipat dev-docs-api |
-| *(thiếu)* | `test-integration` | **MỚI** - từ Xipat dev-integration-test |
-| *(thiếu)* | `check-quality` | **MỚI** - từ Xipat dev-quality-gate + dev-sonar-check |
-| *(thiếu)* | `swagger-ref` | **MỚI** - từ Xipat swagger |
-| *(thiếu)* | `larkbot-ref` | **MỚI** - từ Xipat larkbot.md |
-| *(thiếu)* | `notify` | **MỚI** - extract notification logic |
+Feature Registry là hệ thống file-based quản lý user stories, test cases, và tiến độ feature. Được tạo bởi `/break-task` và cập nhật bởi tất cả skills trong workflow.
 
-### Tóm tắt thay đổi
-- **Giữ:** 6 skills (đổi tên 4)
-- **Xoá:** 1 skill (gộp vào implement)
-- **Thêm mới:** 9 skills
-- **Tổng:** 16 skills (8 action + 2 orchestrator + 1 notification + 5 reference)
+### 10.2 Cấu trúc
 
----
+```
+docs/
+├── registry.yaml                         # Master index
+├── features/
+│   └── {FEATURE_FLAG}/
+│       ├── manifest.yaml                 # Source of truth cho feature
+│       ├── user-stories/US-xxx.md        # Frontmatter: id, status, assigned_to, priority, complexity
+│       ├── test-cases/TC-xxx.md          # Frontmatter: type, covers, covers_ac, status
+│       ├── test-cases/coverage-matrix.md # Mapping US → AC → TC
+│       └── decisions/ADR-xxx.md          # Architecture Decision Records
+├── templates/                            # 5 templates chuẩn
+└── REGISTRY-CONTRACT.md                  # Quy tắc concurrent access
+```
 
-## 11. Checklist triển khai
+### 10.3 Status flow
 
-### Phase 1: Foundation (ưu tiên cao nhất)
-- [ ] Tạo `resources.md` template
-- [ ] Tạo `larkbot.md` reference (copy từ Xipat)
-- [ ] Viết SKILL.md cho `explore-codebase` (B3)
-- [ ] Viết SKILL.md cho `break-task` (B2) - với readiness score
-- [ ] Viết SKILL.md cho `implement` (C1) - TDD core
-- [ ] Viết SKILL.md cho `review-code` (C2)
+**Feature:** `draft → approved → in-progress → review → done → archived`
+**User Story:** `draft → approved → implementing → done`
+**Test Case:** `draft → ready → pass | fail | blocked`
 
-### Phase 2: Testing & Quality
-- [ ] Viết SKILL.md cho `test-e2e` (D1)
-- [ ] Viết SKILL.md cho `test-integration` (D2)
-- [ ] Viết SKILL.md cho `check-quality` (D3)
-- [ ] Copy `playwright-cli` references từ Xipat (E1)
+### 10.4 Concurrent access (multi-dev)
 
-### Phase 3: Reference & Docs
-- [ ] Viết SKILL.md cho `docs-api` (C3)
-- [ ] Copy `swagger-ref` từ Xipat (E3)
-- [ ] Gộp `ui-shopify` từ Xipat shopify-design-guideline + ui-ux-pro-max (E2)
-- [ ] Viết SKILL.md cho `notify` (E5)
+Quy tắc chi tiết tại `docs/REGISTRY-CONTRACT.md`:
 
-### Phase 4: Orchestrators (viết cuối cùng vì phụ thuộc tất cả skills khác)
-- [ ] Viết SKILL.md cho `task-flow` (A1)
-- [ ] Viết SKILL.md cho `hotfix-flow` (A2)
-- [ ] Viết SKILL.md cho `explore-task` (B1)
-- [ ] Viết `CLAUDE.md` project-level instructions
-- [ ] Test full workflow
+- **Mỗi dev sở hữu stories riêng** — không sửa file người khác
+- **manifest.yaml** — lead dev quản lý, history append-only
+- **Branch strategy:** `feature/{FLAG}/US-xxx` per dev → merge vào `feature/{FLAG}` → merge vào main
+- **Conflict resolution:** status lấy giá trị "tiến hơn", stories_done lấy giá trị lớn hơn
+
+### 10.5 Example
+
+Xem `docs/features/_example-cookie-banner/` — feature mẫu hoàn chỉnh với:
+- 1 manifest.yaml
+- 3 user stories (US-001, US-002, US-003)
+- 5 test cases (TC-001 → TC-004, TC-E01)
+- 1 coverage matrix (78% coverage)
+- 1 ADR
 
 ---
 
-## 12. Lưu ý khi triển khai
+## 11. Error Recovery & Resume
 
-1. **Mỗi skill phải chạy được độc lập** - Không bắt buộc phải chạy qua orchestrator
-2. **User confirm ở mỗi bước quan trọng** - implement, review, commit
-3. **Scope-aware** - Skill tự detect đang ở backend/, frontend/, hay storefront/ để điều chỉnh behavior
-4. **Shopify-specific** - ui-shopify phải cover Polaris components, App Bridge, theme extension patterns
-5. **File-based communication** - Giữ cơ chế `docs/{FEATURE_FLAG}/` nhưng skill phải handle case thư mục trống gracefully
-6. **Không hardcode app name** - Đọc từ resources.md, mỗi project config riêng
+### 11.1 Task-flow resume
+
+Khi gọi lại `/task-flow` cho feature đang làm, orchestrator đọc `manifest.yaml`:
+
+| manifest.status | Resume từ |
+|---|---|
+| `draft` | Step [2] break-task |
+| `approved` | Step [3] explore-codebase |
+| `in-progress` | Loop [4-6] — tìm story chưa `done` |
+| `review` | Step [7] hoặc [8] (test) |
+| `done` | Hỏi user muốn làm gì tiếp |
+
+### 11.2 Story-level recovery
+
+Khi 1 story fail trong loop:
+1. Story giữ status `implementing`
+2. Hỏi user: **Retry** / **Skip** (ghi note) / **Stop** (xử lý manual)
+3. Workflow tiếp tục với stories còn lại
+
+### 11.3 Hotfix → Task-flow escalation
+
+Khi hotfix scope lớn hơn dự kiến:
+1. Giữ nguyên code đã viết
+2. Tạo Feature Registry cho hotfix
+3. Chuyển sang `/task-flow` → resume từ Step [5] (review)
+
+---
+
+## 12. Conventions
+
+1. **Mỗi skill chạy được độc lập** — không bắt buộc phải qua orchestrator
+2. **User confirm ở mỗi bước quan trọng** — implement, review, commit
+3. **Scope-aware** — Skill tự detect backend/, frontend/, storefront/
+4. **Registry luôn up-to-date** — mỗi skill tự cập nhật phần mình khi hoàn thành
+5. **Traceability** — test case phải liên kết với user story qua `covers` field
+6. **Resume-friendly** — orchestrator đọc registry trước khi bắt đầu, skip steps đã hoàn thành
+7. **Multi-dev safe** — ownership rules trong REGISTRY-CONTRACT.md
+8. **Shopify-specific** — ui-shopify cover Polaris, App Bridge, theme extension patterns
+9. **Không hardcode app name** — đọc từ resources.md
+10. **TDD bắt buộc** — không viết production code khi chưa có failing test
+11. **Quality gate bắt buộc** — code không commit nếu chưa pass

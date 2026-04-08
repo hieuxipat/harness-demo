@@ -32,7 +32,7 @@ Boilerplate workspace cho các dự án trong division Megamind. Mỗi project c
 ├── chrome-profile/           # Persistent browser profile
 ├── resources.md              # Environment config (PHẢI config trước khi dùng)
 ├── larkbot.md                # Lark messaging reference
-└── CLAUDE.md                 # File này``
+└── CLAUDE.md                 # File này
 ```
 
 ## Config
@@ -54,7 +54,7 @@ Trước khi dùng bất kỳ skill nào, config `resources.md`:
 - `/hotfix-flow` — Workflow rút gọn cho hotfix
 
 ### Task Analysis
-- `/explore-task` — Lấy task từ board (Notion/Linear)
+- `/explore-task` — Lấy task từ board (Notion/Linear/Lark/Jira), filter + lưu thành file
 - `/break-task` — Phân tích & chia user stories với readiness score
 - `/explore-codebase` — Khám phá codebase conventions
 

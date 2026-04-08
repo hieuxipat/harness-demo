@@ -1,0 +1,39 @@
+# --- EXAMPLE --- Đây là feature mẫu để minh họa cấu trúc Feature Registry
+# Khi tạo feature thật, xóa folder _example-cookie-banner/ và dùng template từ docs/templates/
+
+feature:
+  flag: "cookie-banner"
+  name: "Cookie Consent Banner"
+  version: "1.1.0"
+  status: done                             # draft | approved | in-progress | review | done | archived
+
+ownership:
+  po: "Nguyen Van A"
+  lead_dev: "Tran Van B"
+  developers:
+    - name: "Le Van C"
+      stories: [US-001, US-002]
+    - name: "Pham Van D"
+      stories: [US-003]
+  tester: "Hoang Van E"
+
+scope: fullstack                           # backend | frontend | storefront | fullstack
+
+dependencies:
+  features: []
+  services: []
+
+timeline:
+  created: "2026-03-15"
+  approved: "2026-03-17"
+  target_completion: "2026-03-28"
+
+history:
+  - version: "1.0.0"
+    date: "2026-03-15"
+    author: "Nguyen Van A"
+    change: "Initial user stories (US-001 → US-003)"
+  - version: "1.1.0"
+    date: "2026-03-20"
+    author: "Tran Van B"
+    change: "Implemented all stories, added test cases"
