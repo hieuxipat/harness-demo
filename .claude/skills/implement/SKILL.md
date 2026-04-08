@@ -33,8 +33,12 @@ Input: User story (từ `/break-task` hoặc manual)
 ### Step 0: Chuẩn bị context
 
 1. Đọc conventions từ `/explore-codebase` (nếu đã chạy trước đó)
-2. Đọc test cases từ `docs/{FEATURE_FLAG}/test-cases/` (nếu có)
-3. Xác định scope: Backend / Frontend / Storefront
+2. Đọc manifest từ `docs/features/{FEATURE_FLAG}/manifest.yaml` để hiểu feature context
+3. Đọc user story đang implement từ `docs/features/{FEATURE_FLAG}/user-stories/US-xxx.md`
+4. Đọc test cases từ `docs/features/{FEATURE_FLAG}/test-cases/` (nếu có)
+5. Xác định scope: Backend / Frontend / Storefront
+6. Cập nhật status trong user story file: `status: implementing`
+7. Cập nhật `manifest.yaml`: `feature.status: in-progress`
 
 ### Quy tắc sắt
 
@@ -128,6 +132,19 @@ Quay lại RED cho behavior tiếp theo. User confirm mỗi cycle.
 - Bug found? Viết failing test reproduce bug trước, rồi mới fix
 - Khi test khó viết → design có vấn đề. Lắng nghe test — hard to test = hard to use
 
+## Sau khi implement xong story
+
+1. Cập nhật user story file `US-xxx.md`:
+   - `status: done`
+   - `updated: {ngày hiện tại}`
+   - Check các acceptance criteria đã đạt: `- [x] AC-1: ...`
+
+2. Cập nhật `manifest.yaml`:
+   - `history` — thêm entry: "Implemented US-xxx"
+
+3. Cập nhật `docs/registry.yaml`:
+   - Tăng `stories_done` lên 1
+
 ## Checklist trước khi hoàn thành
 
 - [ ] Mỗi function/method mới có test
@@ -137,3 +154,5 @@ Quay lại RED cho behavior tiếp theo. User confirm mỗi cycle.
 - [ ] Tất cả test pass, output sạch
 - [ ] Test dùng real code (mock chỉ khi bắt buộc)
 - [ ] Edge cases và error cases được cover
+- [ ] User story status cập nhật thành `done`
+- [ ] Registry được cập nhật

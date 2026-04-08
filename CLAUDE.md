@@ -11,9 +11,19 @@ Boilerplate workspace cho các dự án trong division Megamind. Mỗi project c
 ├── frontend/                 # Subproject — git repo riêng (ignored by workspace git)
 ├── storefront/               # Subproject — git repo riêng (ignored by workspace git)
 ├── docs/
-│   ├── {FEATURE_FLAG}/
-│   │   ├── user-stories/     # PO viết
-│   │   └── test-cases/       # Tester viết
+│   ├── registry.yaml         # Master index — tất cả features
+│   ├── features/             # Feature Registry (mỗi feature 1 folder)
+│   │   └── {FEATURE_FLAG}/
+│   │       ├── manifest.yaml         # Metadata: owner, status, version
+│   │       ├── user-stories/         # US-001.md, US-002.md,...
+│   │       ├── test-cases/           # TC-001.md + coverage-matrix.md
+│   │       └── decisions/            # ADR-001.md (Architecture Decision Records)
+│   ├── templates/            # Templates chuẩn cho PO/Tester/Dev
+│   │   ├── user-story.template.md
+│   │   ├── test-case.template.md
+│   │   ├── manifest.template.yaml
+│   │   ├── coverage-matrix.template.md
+│   │   └── adr.template.md
 │   └── app-discovery/        # Thông tin app
 ├── e2e-tests/                # Playwright E2E tests
 │   ├── admin/                # Tests cho frontend
@@ -22,7 +32,7 @@ Boilerplate workspace cho các dự án trong division Megamind. Mỗi project c
 ├── chrome-profile/           # Persistent browser profile
 ├── resources.md              # Environment config (PHẢI config trước khi dùng)
 ├── larkbot.md                # Lark messaging reference
-└── CLAUDE.md                 # File này
+└── CLAUDE.md                 # File này``
 ```
 
 ## Config
@@ -85,12 +95,27 @@ Trước khi dùng bất kỳ skill nào, config `resources.md`:
 /check-quality
 ```
 
+## Feature Registry System
+
+Hệ thống quản lý user stories, test cases, và tiến độ feature:
+
+- `docs/registry.yaml` — master index tất cả features trong workspace
+- `docs/features/{FEATURE_FLAG}/manifest.yaml` — metadata, ownership, timeline cho mỗi feature
+- `docs/features/{FEATURE_FLAG}/user-stories/US-xxx.md` — user stories với frontmatter (id, status, assigned_to, priority, complexity)
+- `docs/features/{FEATURE_FLAG}/test-cases/TC-xxx.md` — test cases liên kết với user stories
+- `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md` — mapping US → TC (traceability)
+- Templates tại `docs/templates/` — dùng khi tạo file mới
+
+**Flow:** `/break-task` tạo registry → `/implement` cập nhật status → test skills tạo TC files → `/check-quality` kiểm tra coverage → `/notify` gửi summary
+
 ## Conventions
 
 - **Mỗi skill chạy được độc lập** — không bắt buộc phải qua orchestrator
 - **User confirm ở mỗi bước quan trọng** — implement, review, commit
 - **Scope-aware** — Skill tự detect backend/, frontend/, storefront/
-- **File-based communication** — User stories và test cases nằm trong `docs/{FEATURE_FLAG}/`
+- **File-based communication** — User stories và test cases nằm trong `docs/features/{FEATURE_FLAG}/`
+- **Registry luôn up-to-date** — Mỗi skill tự cập nhật registry khi hoàn thành
+- **Traceability** — Test case phải liên kết với user story qua `covers` field
 - **Không hardcode app name** — Đọc từ `resources.md`
 - **TDD bắt buộc** — Không viết production code khi chưa có failing test
 - **Quality gate bắt buộc** — Code không được commit nếu chưa pass quality gate

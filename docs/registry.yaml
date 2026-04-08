@@ -1,0 +1,19 @@
+# Feature Registry — Source of truth cho tất cả features trong workspace
+# File này được cập nhật tự động bởi các skills: break-task, implement, check-quality
+# Không chỉnh sửa thủ công trừ khi cần thiết
+
+registry_version: "1.0.0"
+workspace: ""                            # Tên workspace (set bởi init-workspace)
+last_updated: null
+
+features: {}
+  # Ví dụ:
+  # loyalty-program:
+  #   status: in-progress                # draft | approved | in-progress | review | done | archived
+  #   version: "1.2.0"
+  #   scope: fullstack
+  #   stories_total: 4
+  #   stories_done: 2
+  #   tests_total: 6
+  #   tests_pass: 5
+  #   coverage: 75%                      # % stories có ít nhất 1 test case

@@ -27,6 +27,18 @@ Hỏi user nếu chưa có `--scope`:
 - **frontend** — Frontend only
 - **storefront** — Storefront only
 
+## Feature Registry
+
+Workflow sử dụng **Feature Registry System** để quản lý user stories, test cases, và tiến độ:
+- `docs/registry.yaml` — master index tất cả features
+- `docs/features/{FEATURE_FLAG}/manifest.yaml` — metadata cho mỗi feature
+- `docs/features/{FEATURE_FLAG}/user-stories/US-xxx.md` — user stories
+- `docs/features/{FEATURE_FLAG}/test-cases/TC-xxx.md` — test cases
+- `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md` — mapping US → TC
+- Templates: `docs/templates/`
+
+Mọi skill trong workflow đều đọc/ghi vào registry. Đảm bảo registry luôn up-to-date ở mỗi bước.
+
 ## Các bước (thực hiện tuần tự)
 
 ### [1] Tìm task → `/explore-task` (tuỳ chọn)
@@ -37,7 +49,10 @@ Hỏi user: "Bạn đã có task description chưa, hay cần lấy từ board?"
 
 ### [2] Chia nhỏ task → `/break-task`
 
-Phân tích task thành user stories với Implementation Readiness Score. User confirm danh sách stories trước khi tiếp tục.
+Phân tích task thành user stories với Implementation Readiness Score.
+- **Tạo feature registry:** `docs/features/{FEATURE_FLAG}/` với manifest.yaml, user stories, coverage matrix
+- **Cập nhật registry.yaml:** thêm feature vào master index
+- User confirm danh sách stories trước khi tiếp tục
 
 ### [3] Scan conventions → `/explore-codebase`
 
@@ -53,9 +68,13 @@ Lặp theo thứ tự đã sắp xếp từ break-task:
 
 #### [4] Implement → `/implement`
 TDD cho story. Nếu scope fullstack: Backend → Frontend → Storefront.
+- Đọc US-xxx.md để lấy acceptance criteria
+- Cập nhật story status: `implementing` → `done`
+- Cập nhật registry: `stories_done`
 
 #### [5] Review → `/review-code`
-Agent riêng review changes. User chọn fix items.
+Agent riêng review changes. Đối chiếu code với acceptance criteria trong US-xxx.md.
+User chọn fix items.
 
 #### [6] API Docs → `/docs-api` (nếu scope có backend)
 Thêm Swagger decorators cho endpoints mới/thay đổi.
@@ -63,26 +82,34 @@ Thêm Swagger decorators cho endpoints mới/thay đổi.
 ### [7] Integration test → `/test-integration` (nếu scope có backend)
 
 Test BE APIs: controller → service → DB.
+- Tạo TC-xxx.md files liên kết với user stories
+- Cập nhật coverage-matrix.md
 
 **SKIP nếu:** scope là frontend hoặc storefront only.
 
 ### [8] E2E test → `/test-e2e` (nếu scope có frontend hoặc storefront)
 
 Test UI flow trên browser thật.
+- Tạo TC-xxx.md files (type: e2e) liên kết với user stories
+- Cập nhật coverage-matrix.md
 
 **SKIP nếu:** scope là backend only.
 
 ### [9] Quality check → `/check-quality`
 
-Unit tests + SonarQube scan. Phải pass trước khi commit.
+Unit tests + SonarQube scan + story coverage check. Phải pass trước khi commit.
+- Cảnh báo nếu có story chưa có test case
+- Cập nhật registry với test results
 
 **SKIP nếu:** scope là storefront only (thường không có SonarQube).
 
-### [10] Commit & Notify
+### [10] Finalize & Notify
 
-1. Xác nhận với user trước khi commit
-2. Tạo commit message rõ ràng (conventional commits)
-3. Gọi `/notify` để thông báo team qua Larkbot
+1. Cập nhật `manifest.yaml`: `feature.status: done`
+2. Cập nhật `docs/registry.yaml`: `status: done`
+3. Xác nhận với user trước khi commit
+4. Tạo commit message rõ ràng (conventional commits)
+5. Gọi `/notify` — đọc registry để gửi summary chính xác (stories done, test coverage)
 
 ## Workflow theo scope
 
@@ -97,3 +124,4 @@ Unit tests + SonarQube scan. Phải pass trước khi commit.
 - Nếu bất kỳ bước nào fail, dừng lại và xử lý trước khi tiếp tục
 - User có quyền skip bất kỳ bước nào nếu họ yêu cầu — nhưng luôn hỏi xác nhận
 - Không bao giờ tự ý bypass quality gate
+- **Registry phải luôn up-to-date** — mỗi skill tự cập nhật phần mình khi hoàn thành

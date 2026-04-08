@@ -1,0 +1,33 @@
+# Feature Manifest — Source of truth cho 1 feature
+# Copy file này vào docs/features/{FEATURE_FLAG}/manifest.yaml
+
+feature:
+  flag: "{FEATURE_FLAG}"
+  name: "{TÊN FEATURE}"
+  version: "1.0.0"
+  status: draft                          # draft | approved | in-progress | review | done | archived
+
+ownership:
+  po: ""
+  lead_dev: ""
+  developers: []
+  #  - name: "Dev Name"
+  #    stories: [US-001, US-002]
+  tester: ""
+
+scope: backend                           # backend | frontend | storefront | fullstack
+
+dependencies:
+  features: []                           # Feature phụ thuộc: [user-auth, payment]
+  services: []                           # Service phụ thuộc: [redis, rabbitmq]
+
+timeline:
+  created: "{DATE}"
+  approved: null
+  target_completion: null
+
+history:
+  - version: "1.0.0"
+    date: "{DATE}"
+    author: "{AUTHOR}"
+    change: "Initial user stories"

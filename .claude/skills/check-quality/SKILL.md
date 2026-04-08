@@ -101,13 +101,30 @@ Mỗi issue từ API chứa: `component` (file path), `line`, `message`, `type`.
 
 Sau khi fix → quay lại Step 1 (re-run test) → Step 2 (re-scan) → Step 3 (re-check). Lặp tối đa 3 vòng.
 
-### Step 5: Báo cáo
+### Step 5: Kiểm tra test coverage theo registry
+
+Đọc coverage matrix từ `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md`:
+
+1. Kiểm tra xem có user story nào chưa có test case (Status = Missing):
+   - Nếu có → **cảnh báo user**: "US-xxx chưa có test case nào — cần bổ sung trước khi commit"
+   - Liệt kê danh sách stories thiếu test
+
+2. Tính coverage ratio:
+   - `coverage = (stories có ít nhất 1 test) / (tổng stories) × 100%`
+   - **Recommend:** coverage >= 80% trước khi commit
+
+3. Cập nhật `docs/registry.yaml`:
+   - `tests_pass`, `coverage`
+
+### Step 6: Báo cáo
 
 ```
 Quality Gate: PASSED ✓
 - Tests: XX passed, 0 failed
 - Coverage: XX.X%
 - SonarQube: 0 Blocker, 0 Critical, X Major, X Minor
+- Story Coverage: X/Y stories có test (XX%)
+- Missing tests: [US-xxx, US-yyy] (nếu có)
 - Fixed in this session: [danh sách]
 ```
 

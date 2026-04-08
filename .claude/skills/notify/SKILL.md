@@ -28,6 +28,8 @@ Format message: xem `/larkbot-ref` hoặc file `larkbot.md`
 
 ### 1. Task Completed
 
+Đọc `docs/features/{FEATURE_FLAG}/manifest.yaml` và `docs/registry.yaml` để lấy thông tin chính xác.
+
 ```json
 {
   "msg_type": "interactive",
@@ -48,11 +50,11 @@ Format message: xem `/larkbot-ref` hoặc file `larkbot.md`
       { "tag": "hr" },
       {
         "tag": "div",
-        "text": { "tag": "lark_md", "content": "**Summary:**\n{summary of changes}" }
+        "text": { "tag": "lark_md", "content": "**Stories:**\n{stories_done}/{stories_total} completed" }
       },
       {
         "tag": "div",
-        "text": { "tag": "lark_md", "content": "**Quality:**\n- Tests: {pass_count} passed\n- Coverage: {coverage}%\n- SonarQube: {sonar_status}" }
+        "text": { "tag": "lark_md", "content": "**Quality:**\n- Tests: {tests_pass}/{tests_total} passed\n- Story Coverage: {coverage}%\n- SonarQube: {sonar_status}" }
       }
     ]
   }

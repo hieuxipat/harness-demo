@@ -21,49 +21,74 @@ Input: Task description hoặc output từ `/explore-task`
 
 ## Quy trình
 
-### Step 1: Đối chiếu user stories
+### Step 1: Khởi tạo Feature Registry
 
-Đọc user stories trong `docs/{FEATURE_FLAG}/user-stories/` để hiểu scope của task.
+1. Tạo thư mục `docs/features/{FEATURE_FLAG}/` với cấu trúc:
+   ```
+   docs/features/{FEATURE_FLAG}/
+   ├── manifest.yaml
+   ├── user-stories/
+   ├── test-cases/
+   │   └── coverage-matrix.md
+   └── decisions/
+   ```
 
-Nếu chưa có user stories trong thư mục → gửi notification qua Larkbot:
+2. Tạo `manifest.yaml` từ template `docs/templates/manifest.template.yaml`:
+   - Điền `feature.flag`, `feature.name`, `feature.status: draft`
+   - Điền `ownership.po`, `scope` từ task description
+   - Điền `timeline.created` = ngày hiện tại
+
+3. Cập nhật `docs/registry.yaml` — thêm feature mới vào `features:`
+
+### Step 2: Đối chiếu user stories
+
+Đọc user stories từ PO trong `docs/features/{FEATURE_FLAG}/user-stories/`.
+
+Nếu chưa có user stories → gửi notification qua Larkbot:
 - Nội dung: "PO cần bổ sung user stories cho feature flag {FEATURE_FLAG} của app {APP_NAME}"
 - LARK_NOTIFY_URL, APP_NAME lấy từ `resources.md`
 - FEATURE_FLAG lấy từ field Feature flag của task
 - Cách gửi message: xem file `larkbot.md`
 
-### Step 2: Verify design (nếu có)
+### Step 3: Verify design (nếu có)
 
 Nếu task có Figma design URL (từ `resources.md` hoặc task description):
 - Xem chi tiết design
 - Đối chiếu design với user stories
 - Bổ sung các sub-task liên quan đến UI/UX từ design
 
-### Step 3: Tạo user stories với Readiness Score
+### Step 4: Tạo user stories với Readiness Score
 
 Mỗi user story cần:
 - Viết theo góc nhìn người dùng
 - Deliver được giá trị và test được độc lập
 - Đánh giá Implementation Readiness Score
 
-**Format output:**
+**Tạo file cho mỗi story** theo template `docs/templates/user-story.template.md`:
+- Lưu tại `docs/features/{FEATURE_FLAG}/user-stories/US-001.md`, `US-002.md`,...
+- Điền frontmatter: id, title, version, status (draft), priority, complexity
+- Viết user story theo format: Là {ROLE}, tôi muốn {ACTION} để {BENEFIT}
+- Liệt kê acceptance criteria cụ thể
+
+**Format output (hiển thị cho user):**
 
 ```markdown
 ## User Stories for {FEATURE_FLAG}
 
-### US-01: [Tên story] ✅ READY
+### US-001: [Tên story] ✅ READY
 - Scope: Backend (X endpoints) + Frontend (X components)
 - Complexity: S (1-2 files mỗi layer)
 - Dependencies: Không
 - Verdict: **Implement được luôn**
 
-### US-02: [Tên story] ⚠️ NEEDS BREAKDOWN
+### US-002: [Tên story] ⚠️ NEEDS BREAKDOWN
 - Scope: Backend (service + middleware + API) + Storefront (script injection)
 - Complexity: L (5+ files, external service)
-- Dependencies: US-01 phải xong trước
+- Dependencies: US-001 phải xong trước
 - Verdict: **Cần chia nhỏ hơn**
-  → US-02a: [Sub-story a]
-  → US-02b: [Sub-story b]
-  → US-02c: [Sub-story c]
+  → US-002a: [Sub-story a]
+  → US-002b: [Sub-story b]
+  → US-002c: [Sub-story c]
 ```
 
 ### Tiêu chí đánh giá Readiness
@@ -76,18 +101,34 @@ Mỗi user story cần:
 | Estimated test cases | ≤ 8 test cases | > 8 test cases |
 | Có thể demo độc lập | Có | Không, phụ thuộc story khác |
 
-### Step 4: Tự động chia tiếp stories NEEDS BREAKDOWN
+### Step 5: Tự động chia tiếp stories NEEDS BREAKDOWN
 
-Stories đánh dấu ⚠️ NEEDS BREAKDOWN → tự động chia thành sub-stories nhỏ hơn, mỗi sub-story phải đạt ✅ READY.
+Stories đánh dấu ⚠️ NEEDS BREAKDOWN → tự động chia thành sub-stories nhỏ hơn, mỗi sub-story phải đạt ✅ READY. Tạo file riêng cho mỗi sub-story (US-002a.md, US-002b.md,...).
 
-### Step 5: Sắp xếp thứ tự implement
+### Step 6: Sắp xếp thứ tự implement
 
 Sắp xếp theo:
 1. **Dependencies** — story không phụ thuộc story khác lên trước
 2. **Risk** — phần chưa rõ ràng, cần thêm thông tin, hoặc ảnh hưởng nhiều → lên trước
 3. **Scope** — Backend trước (API cần có trước khi FE gọi)
 
-### Step 6: Feedback
+### Step 7: Cập nhật manifest và coverage matrix
+
+1. Cập nhật `manifest.yaml`:
+   - `feature.status` → `approved` (sau khi user confirm)
+   - `feature.version` increment nếu thay đổi stories
+   - `ownership.developers` — assign dev vào stories (nếu biết)
+   - `history` — thêm entry mới
+
+2. Tạo `coverage-matrix.md` skeleton từ template `docs/templates/coverage-matrix.template.md`:
+   - Liệt kê tất cả US + AC
+   - Các cột test để trống (sẽ được fill bởi test skills)
+
+3. Cập nhật `docs/registry.yaml`:
+   - `stories_total`, `stories_done: 0`, `coverage: 0%`
+   - `status: approved`
+
+### Step 8: Feedback
 
 Trình bày danh sách user stories cho user. Hỏi có muốn chỉnh sửa story nào không, chỉnh lại theo yêu cầu cho đến khi user hài lòng.
 
@@ -96,3 +137,4 @@ Trình bày danh sách user stories cho user. Hỏi có muốn chỉnh sửa sto
 - Stories không chứa chi tiết về code — chỉ mô tả behavior từ góc nhìn người dùng
 - Mỗi story phải có acceptance criteria rõ ràng
 - Nếu task quá nhỏ (chỉ 1-2 stories, tất cả READY) → không cần chia thêm, xác nhận với user và tiếp tục
+- Mọi story files phải nằm trong `docs/features/{FEATURE_FLAG}/user-stories/` (KHÔNG dùng `docs/{FEATURE_FLAG}/` cũ)

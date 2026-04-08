@@ -27,9 +27,14 @@ megamind-{app-name}/
 ├── frontend/                 # React admin app (Shopify embedded)
 ├── storefront/               # Theme extension / storefront widget
 ├── docs/
-│   ├── {FEATURE_FLAG}/
-│   │   ├── user-stories/     # PO viết user stories ở đây
-│   │   └── test-cases/       # Tester viết test cases ở đây
+│   ├── registry.yaml         # Master index — tất cả features
+│   ├── features/             # Feature Registry
+│   │   └── {FEATURE_FLAG}/
+│   │       ├── manifest.yaml         # Metadata: owner, status, version
+│   │       ├── user-stories/         # US-001.md, US-002.md,...
+│   │       ├── test-cases/           # TC-001.md + coverage-matrix.md
+│   │       └── decisions/            # ADR-001.md
+│   ├── templates/            # Templates chuẩn cho PO/Tester/Dev
 │   └── app-discovery/        # Thông tin app
 ├── e2e-tests/
 │   ├── admin/                # E2E cho frontend (Shopify admin)
@@ -276,23 +281,72 @@ US-02: Banner hiển thị theo geo-location ⚠️ NEEDS BREAKDOWN
 
 ---
 
-## Thư mục `docs/` — Giao tiếp giữa PO, Tester và Dev
+## Feature Registry System — Quản lý user stories, test cases, tiến độ
+
+### Cấu trúc
 
 ```
 docs/
-├── {FEATURE_FLAG}/
-│   ├── user-stories/     # PO viết user stories vào đây
-│   └── test-cases/       # Tester viết test cases vào đây
-└── app-discovery/        # Thông tin chung về app
+├── registry.yaml                         # Master index — tất cả features
+├── features/
+│   └── {FEATURE_FLAG}/                   # Mỗi feature 1 folder
+│       ├── manifest.yaml                 # Metadata: owner, status, version, timeline
+│       ├── user-stories/
+│       │   ├── US-001.md                 # User story với frontmatter chuẩn
+│       │   ├── US-002.md
+│       │   └── ...
+│       ├── test-cases/
+│       │   ├── TC-001.md                 # Test case liên kết với US
+│       │   ├── coverage-matrix.md        # Mapping US → TC (traceability)
+│       │   └── ...
+│       └── decisions/
+│           └── ADR-001.md                # Architecture Decision Records
+├── templates/                            # Templates chuẩn
+│   ├── user-story.template.md
+│   ├── test-case.template.md
+│   ├── manifest.template.yaml
+│   ├── coverage-matrix.template.md
+│   └── adr.template.md
+└── app-discovery/
 ```
 
-**Quy trình:**
-1. PO viết user stories vào `docs/{FEATURE_FLAG}/user-stories/`
-2. Tester viết test cases vào `docs/{FEATURE_FLAG}/test-cases/`
-3. Dev chạy `/break-task` — skill sẽ đọc user stories từ thư mục này
-4. Dev chạy `/implement` — skill sẽ đọc test cases làm acceptance criteria
+### Quy trình
 
-> Nếu thư mục trống, skill vẫn hoạt động bình thường — chỉ là không có sẵn tài liệu để tham khảo.
+1. Dev chạy `/break-task` → skill tạo feature folder, `manifest.yaml`, `US-xxx.md` files, `coverage-matrix.md`
+2. PO review và bổ sung user stories (hoặc viết trước vào `docs/features/{FEATURE_FLAG}/user-stories/`)
+3. Tester viết test cases vào `docs/features/{FEATURE_FLAG}/test-cases/`
+4. Dev chạy `/implement` → skill đọc US, cập nhật status khi xong
+5. Test skills (`/test-integration`, `/test-e2e`) → tạo `TC-xxx.md`, cập nhật coverage matrix
+6. `/check-quality` → kiểm tra story coverage, cảnh báo nếu có story chưa có test
+7. `/notify` → đọc registry gửi summary: "3/4 stories done, coverage 75%"
+
+### manifest.yaml — Tim của mỗi feature
+
+Mỗi feature có 1 file `manifest.yaml` chứa:
+- **Metadata:** feature flag, name, version, status (draft → approved → in-progress → done)
+- **Ownership:** PO, lead dev, developers + stories assigned, tester
+- **Scope:** backend/frontend/storefront/fullstack
+- **Dependencies:** features và services phụ thuộc
+- **Timeline:** created, approved, target completion
+- **History:** changelog của feature
+
+### Coverage Matrix — Đảm bảo không sót test
+
+Mapping rõ ràng giữa User Story → Acceptance Criteria → Test Cases:
+
+```
+| US    | AC   | Unit   | Integration | E2E    | Status  |
+|-------|------|--------|-------------|--------|---------|
+| US-001| AC-1 | TC-U01 | TC-001      | —      | Covered |
+| US-002| AC-1 | —      | —           | —      | Missing |
+```
+
+### Quản lý nhiều dev trong team
+
+- Mỗi dev được assign vào stories cụ thể trong `manifest.yaml`
+- Story có `status` field: draft → approved → implementing → done
+- Mỗi dev làm trên branch riêng: `feature/{FEATURE_FLAG}/US-xxx`
+- Registry tự cập nhật tiến độ: stories_done, tests_pass, coverage
 
 ---
 

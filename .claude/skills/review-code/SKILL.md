@@ -24,7 +24,11 @@ Review toàn bộ code vừa implement trước khi chuyển sang bước tiếp
 Mở 1 agent riêng để review code. Agent cần nhận:
 - Danh sách file đã thay đổi: `git diff --name-only`
 - Nội dung thay đổi: `git diff` (staged + unstaged)
-- Context về feature đang implement (từ user stories nếu có)
+- Feature manifest: `docs/features/{FEATURE_FLAG}/manifest.yaml`
+- User stories và acceptance criteria: `docs/features/{FEATURE_FLAG}/user-stories/US-xxx.md`
+- Coverage matrix: `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md`
+
+Agent review sẽ verify code match với acceptance criteria trong user stories — nếu có AC chưa được cover bởi code, báo là Blocker.
 
 ### Step 2: Agent review và phân loại feedback
 
@@ -86,9 +90,15 @@ Sau khi fix, báo lại user:
 - ⏭️ [Suggestion 3] — skipped theo yêu cầu
 ```
 
+### Step 5: Cập nhật manifest (nếu có thay đổi sau review)
+
+Nếu review dẫn đến fix code → cập nhật `manifest.yaml`:
+- `history` — thêm entry: "Code review fixes for US-xxx"
+
 ## Lưu ý
 
 - Review phải dựa trên git diff thực tế, không phải assumptions
 - Nếu không có changes (git diff trống) → báo user và skip
 - Không review generated files (lock files, build output...)
 - Focus vào logic và behavior, không nitpick formatting nếu project có linter
+- Đối chiếu code với acceptance criteria trong user stories — đây là tiêu chí quan trọng nhất

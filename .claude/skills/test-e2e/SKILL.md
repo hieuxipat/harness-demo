@@ -42,8 +42,10 @@ e2e-tests/
 
 ### Step 1: Chuẩn bị scenarios
 
-1. Lấy user stories từ `docs/{FEATURE_FLAG}/user-stories/`
-2. Lấy test cases từ `docs/{FEATURE_FLAG}/test-cases/`
+1. Đọc manifest từ `docs/features/{FEATURE_FLAG}/manifest.yaml`
+2. Lấy user stories từ `docs/features/{FEATURE_FLAG}/user-stories/`
+3. Lấy test cases từ `docs/features/{FEATURE_FLAG}/test-cases/`
+4. Đọc coverage matrix từ `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md` để biết stories nào chưa có E2E test
 3. Xác định luồng chính cần test:
    - **Happy path** — luồng người dùng chuẩn, kỳ vọng thành công
    - **Edge cases** — input không hợp lệ, trạng thái rỗng, lỗi mạng
@@ -84,16 +86,35 @@ Mỗi bước:
 - Network requests thành công: `playwright-cli network`
 - Navigation đúng flow
 
-### Step 4: Báo cáo
+### Step 4: Tạo test case files và cập nhật coverage
+
+Với mỗi E2E scenario:
+
+1. Tạo file `docs/features/{FEATURE_FLAG}/test-cases/TC-xxx.md` từ template `docs/templates/test-case.template.md`:
+   - `type: e2e`
+   - `covers: [US-xxx]` — liên kết user stories
+   - `covers_ac: [AC-x]` — liên kết acceptance criteria
+   - `status: pass | fail`
+   - `last_run: {ngày hiện tại}`
+
+2. Cập nhật `docs/features/{FEATURE_FLAG}/test-cases/coverage-matrix.md`:
+   - Điền TC-xxx vào cột E2E tương ứng
+   - Cập nhật Status
+
+3. Cập nhật `docs/registry.yaml`:
+   - `tests_total`, `tests_pass`, `coverage`
+
+### Step 5: Báo cáo
 
 ```
 E2E Test: [PASSED/FAILED]
 - Scope: admin | storefront | fullstack
 - Total scenarios: X
 - Passed: X | Failed: X
+- Test Case Files: docs/features/{FEATURE_FLAG}/test-cases/TC-xxx.md
 - Chi tiết:
-  ✓ [Scenario 1] — mô tả
-  ✗ [Scenario 2] — lý do fail
+  ✓ [Scenario 1] — mô tả (TC-E01 → US-001/AC-2)
+  ✗ [Scenario 2] — lý do fail (TC-E02 → US-002/AC-1)
 - Screenshots: e2e-tests/{scope}/
 ```
 
@@ -106,3 +127,4 @@ Nếu có test fail → báo user chi tiết và hỏi: fix code hay skip scenar
 - Dùng `playwright-cli network` để debug khi API call không trả về kỳ vọng
 - APP_URL lấy từ `resources.md` hoặc hỏi user nếu chưa có
 - Persistent profile tại `chrome-profile/` giữ session login giữa các lần test
+- Mọi test case phải có file TC-xxx.md liên kết với user story — đảm bảo traceability
