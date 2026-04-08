@@ -21,60 +21,91 @@ Khởi tạo workspace mới từ megamind-ai-boilerplate. Chạy **1 lần duy 
 
 ### Bước 1: Thu thập thông tin
 
-Hỏi user lần lượt (dùng AskUserQuestion cho từng câu):
+Hỏi user từng câu một. Mỗi câu hỏi ghi rõ bắt buộc hay tuỳ chọn. Nếu user trả lời trống hoặc "skip" cho câu tuỳ chọn → bỏ qua.
 
-1. **Workspace name** — Tên workspace (vd: `ordertracking-workspace`)
-   - Validate: lowercase, numbers, hyphens only. Regex: `^[a-z0-9][a-z0-9-]*[a-z0-9]$`
-   - Nếu không hợp lệ → báo lỗi, hỏi lại
+**Câu 1 (bắt buộc): Workspace name**
 
-2. **GitLab remote URL** — URL remote cho workspace
-   - Vd: `git@gitlab.com:megamind/ordertracking-workspace.git`
+```
+Tên workspace? (vd: ordertracking-workspace)
+→ Chỉ cho phép: chữ thường, số, dấu gạch ngang
+```
 
-3. **App name** — Tên app hiển thị (vd: `Order Tracking`)
-   - Sẽ được ghi vào `resources.md` → field `APP_NAME`
+- Validate regex: `^[a-z0-9][a-z0-9-]*[a-z0-9]$`
+- Nếu không hợp lệ → giải thích lỗi, hỏi lại
+- Nếu chỉ 1 ký tự → regex `^[a-z0-9]$`
 
-4. **Subprojects** — Danh sách các dự án con cần clone vào workspace
-   - Hỏi: "Liệt kê các dự án con bạn muốn kéo vào workspace (tên thư mục + git URL). Nhập từng cái, gõ 'done' khi xong."
-   - Mỗi dự án con cần:
-     - **Tên thư mục** (vd: `backend`, `frontend`, `storefront`, hoặc tên tuỳ ý)
-     - **Git URL** (vd: `git@gitlab.com:megamind/ordertracking-backend.git`)
-   - Có thể 0 hoặc nhiều dự án con
-   - Ví dụ input:
-     ```
-     backend  → git@gitlab.com:megamind/ordertracking-backend.git
-     frontend → git@gitlab.com:megamind/ordertracking-frontend.git
-     done
-     ```
+**Câu 2 (bắt buộc): App name**
+
+```
+Tên app hiển thị? (vd: Order Tracking)
+→ Sẽ được ghi vào resources.md
+```
+
+**Câu 3 (tuỳ chọn): GitLab remote URL cho workspace**
+
+```
+GitLab remote URL cho workspace? (vd: git@gitlab.com:megamind/ordertracking-workspace.git)
+→ Nhập 'skip' hoặc Enter để bỏ qua (có thể thêm sau)
+```
+
+- Nếu user trả lời "skip", "không có", "chưa có", trống, hoặc bất kỳ câu nào thể hiện chưa có → ghi nhận `REMOTE_URL = none`, skip push ở bước thực hiện
+- **KHÔNG** hỏi lại, **KHÔNG** báo lỗi
+
+**Câu 4 (tuỳ chọn): Subprojects**
+
+```
+Các dự án con muốn kéo vào workspace?
+→ Nhập theo format: tên-thư-mục git-url (mỗi dòng 1 project)
+→ Nhập 'done' hoặc Enter để kết thúc
+→ Nhập 'skip' nếu chưa có
+
+Ví dụ:
+  backend git@gitlab.com:megamind/ordertracking-backend.git
+  frontend git@gitlab.com:megamind/ordertracking-frontend.git
+  done
+```
+
+- Nếu user trả lời "skip", "done", trống → ghi nhận danh sách rỗng
+- Cho phép nhập nhiều lần cho đến khi user gõ "done"
 
 ### Bước 2: Xác nhận
 
-Hiển thị summary cho user confirm trước khi thực hiện:
+Hiển thị summary **CHỈ những gì user đã cung cấp**. Mục nào skip thì ghi "(skip)":
 
 ```
-Summary:
+╔══════════════════════════════════════╗
+║         Init Workspace Summary       ║
+╠══════════════════════════════════════╣
   Workspace:  ordertracking-workspace
-  Remote:     git@gitlab.com:megamind/ordertracking-workspace.git
   App name:   Order Tracking
+  Remote:     git@gitlab.com:megamind/ordertracking-workspace.git
+              (hoặc: "— chưa có, sẽ thêm sau")
   Subprojects:
     - backend/   ← git@gitlab.com:megamind/ordertracking-backend.git
     - frontend/  ← git@gitlab.com:megamind/ordertracking-frontend.git
+              (hoặc: "— không có subproject")
+╚══════════════════════════════════════╝
 
 Proceed? [Y/n]
 ```
 
+Chờ user confirm. Nếu user nói không → hỏi muốn sửa gì, quay lại câu hỏi tương ứng.
+
 ### Bước 3: Thực hiện
 
-Sau khi user confirm, thực hiện các bước sau **theo thứ tự**:
+Sau khi user confirm, thực hiện **tuần tự** theo đúng thứ tự dưới đây. Mỗi bước log rõ đang làm gì.
 
-#### 3.1 Xoá git history cũ của boilerplate
+#### 3.1 Xoá git history cũ
 
 ```bash
 rm -rf .git
 ```
 
+- Nếu `.git` không tồn tại → skip, log: "Không có .git cũ, skip."
+
 #### 3.2 Cập nhật .gitignore
 
-Thêm các thư mục subproject vào `.gitignore`:
+**Chỉ thực hiện nếu có subprojects.** Ghi vào `.gitignore`:
 
 ```
 # Subprojects (managed by their own git repos)
@@ -82,21 +113,19 @@ backend/
 frontend/
 ```
 
-Mỗi subproject thêm 1 dòng `{folder_name}/`.
+- Nếu `.gitignore` đã có nội dung → append thêm (không xoá nội dung cũ)
+- Nếu không có subprojects → skip bước này
 
 #### 3.3 Cập nhật resources.md
 
-Set `APP_NAME` trong `resources.md`:
-
-```
-APP_NAME="Order Tracking"
-```
+Thay `APP_NAME=""` thành `APP_NAME="{app_name}"` trong `resources.md`.
 
 #### 3.4 Cập nhật CLAUDE.md
 
-Thêm section **Subprojects** vào cuối CLAUDE.md để Claude Code biết cấu trúc workspace:
+**Chỉ thực hiện nếu có subprojects.** Thêm section vào cuối CLAUDE.md:
 
 ```markdown
+
 ## Subprojects
 
 Workspace này chứa các dự án con (mỗi cái có git repo riêng):
@@ -109,18 +138,19 @@ Workspace này chứa các dự án con (mỗi cái có git repo riêng):
 > Các thư mục subproject được ignore bởi workspace git. Để commit code trong subproject, `cd` vào thư mục đó.
 ```
 
-#### 3.5 Init git mới cho workspace
+#### 3.5 Init git mới
 
 ```bash
 git init
 git add -A
 git commit -m "Initial commit from megamind-ai-boilerplate
 
-Workspace: {WORKSPACE_NAME}
-Subprojects: {list of subproject names}"
+Workspace: {WORKSPACE_NAME}"
 ```
 
 #### 3.6 Set remote và push
+
+**Chỉ thực hiện nếu user cung cấp remote URL (REMOTE_URL != none).**
 
 ```bash
 git remote add origin {REMOTE_URL}
@@ -128,39 +158,55 @@ git branch -M main
 git push -u origin main
 ```
 
-#### 3.7 Clone các subprojects
+- Nếu push fail → **KHÔNG dừng flow**. Log warning:
+  ```
+  ⚠️ Push failed. Có thể repo chưa được tạo trên GitLab.
+  Bạn có thể push sau bằng: git push -u origin main
+  ```
+- Nếu REMOTE_URL = none → skip hoàn toàn bước này. Log:
+  ```
+  Skip remote — chưa có URL. Thêm sau bằng:
+    git remote add origin <url>
+    git push -u origin main
+  ```
 
-Clone từng subproject vào workspace:
+#### 3.7 Clone subprojects
+
+**Chỉ thực hiện nếu có subprojects.**
+
+Clone từng subproject:
 
 ```bash
 git clone {subproject_git_url} {folder_name}
 ```
 
-Nếu clone fail → báo warning nhưng **không dừng** flow. User có thể clone lại sau.
+- Nếu clone fail → log warning, **tiếp tục** clone các project còn lại:
+  ```
+  ⚠️ Clone backend/ failed. Bạn có thể clone sau:
+    git clone git@gitlab.com:megamind/ordertracking-backend.git backend
+  ```
+- Nếu không có subprojects → skip bước này
 
 #### 3.8 Rename thư mục workspace
 
-Nếu tên thư mục hiện tại khác workspace name:
+Nếu tên thư mục hiện tại **khác** workspace name:
 
 ```bash
-# Thực hiện từ parent directory
 cd ..
 mv {current_dir_name} {workspace_name}
 cd {workspace_name}
 ```
 
-> **Lưu ý:** Bước này thực hiện **sau cùng** vì rename directory sẽ thay đổi working directory.
-> Nếu thư mục đích đã tồn tại → báo lỗi, skip rename.
+- Nếu thư mục đích đã tồn tại → skip rename, log warning
+- Nếu tên đã đúng → skip
 
 ### Bước 4: Xoá skill init-workspace
-
-Sau khi hoàn tất, xoá thư mục `.claude/skills/init-workspace/` vì không còn cần thiết:
 
 ```bash
 rm -rf .claude/skills/init-workspace
 ```
 
-Commit thay đổi này:
+Nếu có remote và push thành công:
 
 ```bash
 git add -A
@@ -168,27 +214,49 @@ git commit -m "Remove init-workspace skill (one-time setup completed)"
 git push
 ```
 
+Nếu không có remote:
+
+```bash
+git add -A
+git commit -m "Remove init-workspace skill (one-time setup completed)"
+```
+
 ### Bước 5: Hiển thị kết quả
 
+Hiển thị kết quả với trạng thái từng bước:
+
 ```
-✅ Workspace initialized!
+Workspace initialized!
 
   Directory:    /path/to/ordertracking-workspace
-  Remote:       git@gitlab.com:megamind/ordertracking-workspace.git
+  App name:     Order Tracking
+  Remote:       git@gitlab.com:megamind/ordertracking-workspace.git (pushed)
+                hoặc: "— chưa cấu hình"
   Branch:       main
   Subprojects:
-    ✅ backend/   — cloned
-    ✅ frontend/  — cloned
+    backend/    — cloned
+    frontend/   — cloned
+                hoặc: "— không có subproject"
 
-  Next steps:
-    1. Config resources.md with remaining fields (TASK_LIST_URL, LARK_NOTIFY_URL, etc.)
-    2. Start using skills: /task-flow, /explore-codebase, etc.
+Next steps:
+  1. Config resources.md (TASK_LIST_URL, LARK_NOTIFY_URL, ...)
+  2. (Nếu chưa push) git remote add origin <url> && git push -u origin main
+  3. Start using skills: /task-flow, /explore-codebase, etc.
 ```
 
-## Lưu ý
+**Chỉ hiển thị "next steps" liên quan:**
+- Nếu đã push → không hiển thị step push
+- Nếu không có subprojects → không hiển thị subproject info
 
-- Skill này chỉ chạy **1 lần**. Sau khi hoàn tất, skill tự xoá.
-- Nếu `.git` directory không tồn tại (đã bị xoá trước đó) → skip bước 3.1
-- Nếu user không có subproject nào → skip bước 3.7, `.gitignore` không thêm gì
-- Luôn confirm trước khi thực hiện destructive actions (xoá .git, push)
-- Nếu push fail (repo chưa tạo trên GitLab) → báo user tạo repo trước rồi chạy `git push -u origin main` manually
+## Xử lý lỗi
+
+| Tình huống | Xử lý |
+|-----------|-------|
+| User trả lời "skip"/"không có"/trống cho câu tuỳ chọn | Ghi nhận skip, tiếp tục câu tiếp |
+| Workspace name không hợp lệ | Giải thích, hỏi lại |
+| Remote URL không hợp lệ | Giải thích, hỏi lại hoặc cho skip |
+| Push fail | Warning, tiếp tục flow, hướng dẫn push sau |
+| Clone subproject fail | Warning, tiếp tục clone project khác |
+| Thư mục rename conflict | Skip rename, log warning |
+| `.git` không tồn tại | Skip xoá, tiếp tục |
+| User nói "no" ở confirm | Hỏi muốn sửa gì, quay lại câu hỏi đó |
