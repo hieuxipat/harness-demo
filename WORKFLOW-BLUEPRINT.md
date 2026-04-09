@@ -38,7 +38,7 @@ megamind-{app-name}/
 ```markdown
 # Resources
 
-TASK_LIST_URL=                    # Notion/Linear board URL
+TASK_LIST_URL=                    # board URL
 LARK_NOTIFY_URL=                  # Lark Bot webhook
 APP_NAME=""                       # Tên app (vd: "Consentik Shopify")
 SONARQUBE_TOKEN=                  # SonarQube auth
@@ -49,43 +49,13 @@ FIGMA_URL=                        # Figma design URL (nếu có)
 
 ---
 
-## 2. Lịch sử phát triển: Xipat Workflow → Megamind Boilerplate
+## 2. Danh sách Skills (17 skills)
 
-### 2.1 Nguồn gốc
-
-Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem `xipat-workflow/README.md`). Quá trình chuyển đổi:
-
-| Xipat (22 skills) | Megamind (17 skills) | Thay đổi |
-|---|---|---|
-| `dev-task-explore` | `explore-task` | Đổi tên, thêm filter + lưu file markdown |
-| `dev-task-break` | `break-task` | Thêm Readiness Score, tạo Feature Registry |
-| `dev-test-driven-development` | `implement` | Rút gọn tên, thêm registry integration |
-| `dev-code-rules` | `explore-codebase` | Mở rộng cho storefront |
-| `dev-code-review` | `review-code` | Thêm AC verification |
-| `dev-docs-api` | `docs-api` | Giữ nguyên |
-| `dev-e2e-test` | `test-e2e` | Thêm TC file output, coverage matrix |
-| `dev-integration-test` | `test-integration` | Thêm TC file output, coverage matrix |
-| `dev-quality-gate` + `dev-sonar-check` | `check-quality` | Gộp 2 thành 1, thêm story coverage check |
-| `dev-task-flow` | `task-flow` | Thêm Feature Registry, error recovery, resume |
-| *(không có)* | `hotfix-flow` | **Mới** — orchestrator rút gọn |
-| *(không có)* | `init-workspace` | **Mới** — one-time setup |
-| *(không có)* | `notify` | **Mới** — extract notification logic |
-| `playwright-cli` | `playwright-cli` | Giữ nguyên |
-| `shopify-design-guideline` + `ui-ux-pro-max` | `ui-shopify` | Gộp 2 thành 1 |
-| `swagger` | `swagger-ref` | Giữ nguyên |
-| *(không có)* | `larkbot-ref` | **Mới** — quick reference |
-
-**Loại bỏ từ Xipat:** Tester workflow (4 skills), gateway skills (`dev-eni-test`, `dev-code-quality`), duplicate (`implement-user-story` vs `test-driven-development`)
-
----
-
-## 3. Danh sách Skills (17 skills)
-
-### 3.1 Quy tắc đặt tên
+### 2.1 Quy tắc đặt tên
 
 **Format:** `{action}-{object}` — ngắn gọn, verb-first, không prefix `dev-`/`tester-`
 
-### 3.2 Skills theo nhóm
+### 2.2 Skills theo nhóm
 
 #### Nhóm A: Setup (1 skill)
 
@@ -136,9 +106,9 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 
 ---
 
-## 4. Cơ chế Workflow theo loại task
+## 3. Cơ chế Workflow theo loại task
 
-### 4.1 Feature Full-stack (BE + FE + Storefront)
+### 3.1 Feature Full-stack (BE + FE + Storefront)
 
 ```
 /task-flow --scope fullstack
@@ -159,7 +129,7 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 [10] Commit & Notify
 ```
 
-### 4.2 Feature Backend-only
+### 3.2 Feature Backend-only
 
 ```
 /task-flow --scope backend
@@ -180,7 +150,7 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 → SKIP: test-e2e (không có UI)
 ```
 
-### 4.3 Feature Frontend-only
+### 3.3 Feature Frontend-only
 
 ```
 /task-flow --scope frontend
@@ -200,7 +170,7 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 → SKIP: docs-api (không có API mới), test-integration
 ```
 
-### 4.4 Feature Storefront-only
+### 3.4 Feature Storefront-only
 
 ```
 /task-flow --scope storefront
@@ -219,7 +189,7 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 → SKIP: docs-api, test-integration, check-quality (storefront thường không có SonarQube)
 ```
 
-### 4.5 Hotfix (rút gọn)
+### 3.5 Hotfix (rút gọn)
 
 ```
 /hotfix-flow
@@ -234,7 +204,7 @@ Megamind Boilerplate được phát triển dựa trên **Xipat Workflow** (xem 
 → Notify có flag URGENT qua Larkbot
 ```
 
-### 4.6 Standalone skills (dùng độc lập)
+### 3.6 Standalone skills (dùng độc lập)
 
 Mỗi skill đều có thể chạy độc lập mà không cần orchestrator:
 
@@ -252,9 +222,9 @@ Mỗi skill đều có thể chạy độc lập mà không cần orchestrator:
 
 ---
 
-## 5. Cải thiện cơ chế Break Task
+## 4. Cải thiện cơ chế Break Task
 
-### Vấn đề ở Xipat
+### Vấn đề
 - Chia user stories nhưng không cho user biết story nào đủ nhỏ để implement luôn
 - Không có tiêu chí rõ ràng để đánh giá "size" của story
 
@@ -301,7 +271,7 @@ Mỗi skill đều có thể chạy độc lập mà không cần orchestrator:
 
 ---
 
-## 6. Cơ chế E2E Test
+## 5. Cơ chế E2E Test
 
 ### Khi nào cần E2E?
 
@@ -332,7 +302,7 @@ e2e-tests/
 
 ---
 
-## 7. Cấu trúc thư mục Skills chi tiết
+## 6. Cấu trúc thư mục Skills chi tiết
 
 ```
 .claude/skills/
@@ -398,7 +368,7 @@ e2e-tests/
 
 ---
 
-## 8. Nội dung tóm tắt mỗi Skill
+## 7. Nội dung tóm tắt mỗi Skill
 
 ### A1. init-workspace
 
@@ -588,7 +558,7 @@ Logic:
 
 ---
 
-## 9. Skill dependency map
+## 8. Skill dependency map
 
 ```
 task-flow (orchestrator)                          Feature Registry
@@ -615,13 +585,13 @@ hotfix-flow (orchestrator)
 
 ---
 
-## 10. Feature Registry System
+## 9. Feature Registry System
 
-### 10.1 Tổng quan
+### 9.1 Tổng quan
 
 Feature Registry là hệ thống file-based quản lý user stories, test cases, và tiến độ feature. Được tạo bởi `/break-task` và cập nhật bởi tất cả skills trong workflow.
 
-### 10.2 Cấu trúc
+### 9.2 Cấu trúc
 
 ```
 docs/
@@ -637,13 +607,13 @@ docs/
 └── REGISTRY-CONTRACT.md                  # Quy tắc concurrent access
 ```
 
-### 10.3 Status flow
+### 9.3 Status flow
 
 **Feature:** `draft → approved → in-progress → review → done → archived`
 **User Story:** `draft → approved → implementing → done`
 **Test Case:** `draft → ready → pass | fail | blocked`
 
-### 10.4 Concurrent access (multi-dev)
+### 9.4 Concurrent access (multi-dev)
 
 Quy tắc chi tiết tại `docs/REGISTRY-CONTRACT.md`:
 
@@ -652,7 +622,7 @@ Quy tắc chi tiết tại `docs/REGISTRY-CONTRACT.md`:
 - **Branch strategy:** `feature/{FLAG}/US-xxx` per dev → merge vào `feature/{FLAG}` → merge vào main
 - **Conflict resolution:** status lấy giá trị "tiến hơn", stories_done lấy giá trị lớn hơn
 
-### 10.5 Example
+### 9.5 Example
 
 Xem `docs/features/_example-cookie-banner/` — feature mẫu hoàn chỉnh với:
 - 1 manifest.yaml
@@ -663,9 +633,9 @@ Xem `docs/features/_example-cookie-banner/` — feature mẫu hoàn chỉnh vớ
 
 ---
 
-## 11. Error Recovery & Resume
+## 10. Error Recovery & Resume
 
-### 11.1 Task-flow resume
+### 10.1 Task-flow resume
 
 Khi gọi lại `/task-flow` cho feature đang làm, orchestrator đọc `manifest.yaml`:
 
@@ -677,14 +647,14 @@ Khi gọi lại `/task-flow` cho feature đang làm, orchestrator đọc `manife
 | `review` | Step [7] hoặc [8] (test) |
 | `done` | Hỏi user muốn làm gì tiếp |
 
-### 11.2 Story-level recovery
+### 10.2 Story-level recovery
 
 Khi 1 story fail trong loop:
 1. Story giữ status `implementing`
 2. Hỏi user: **Retry** / **Skip** (ghi note) / **Stop** (xử lý manual)
 3. Workflow tiếp tục với stories còn lại
 
-### 11.3 Hotfix → Task-flow escalation
+### 10.3 Hotfix → Task-flow escalation
 
 Khi hotfix scope lớn hơn dự kiến:
 1. Giữ nguyên code đã viết
@@ -693,7 +663,7 @@ Khi hotfix scope lớn hơn dự kiến:
 
 ---
 
-## 12. Conventions
+## 11. Conventions
 
 1. **Mỗi skill chạy được độc lập** — không bắt buộc phải qua orchestrator
 2. **User confirm ở mỗi bước quan trọng** — implement, review, commit
