@@ -7,7 +7,7 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
@@ -15,8 +15,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- (User preferences for plan location override this default)
+**Save plans to:** `docs/features/<group>/US-<id>-<name>/plans/<feature-name>.md`
+- The `<group>`, `<id>`, and `<name>` come from the user story being implemented. Extract from the story path provided during brainstorming (e.g. `docs/features/dispute/US-SP25-dispute-ui-optimization/`).
 
 ## Scope Check
 
@@ -95,12 +95,10 @@ def function(input):
 Run: `pytest tests/path/test.py::test_name -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Verify all tests still pass**
 
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
+Run: `<project test command>`
+Expected: All tests PASS
 ````
 
 ## No Placeholders
@@ -117,7 +115,7 @@ Every step must contain the actual content an engineer needs. These are **plan f
 - Exact file paths always
 - Complete code in every step — if a step changes code, show the code
 - Exact commands with expected output
-- DRY, YAGNI, TDD, frequent commits
+- DRY, YAGNI, TDD
 
 ## Self-Review
 
@@ -135,7 +133,7 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/features/<group>/US-<id>-<name>/plans/<filename>.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 

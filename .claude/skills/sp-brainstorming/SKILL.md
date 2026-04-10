@@ -17,19 +17,29 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
 
+## Required Input
+
+When invoked for a user story that has gone through Phase 1 (explore-story) and Phase 2 (create-test-case), brainstorming **MUST** receive both files as input:
+
+- **User Story:** `docs/features/<group>/US-<id>-<name>/US-<id>-<name>.md`
+- **Test Cases:** `docs/features/<group>/US-<id>-<name>/TC-<id>-<name>.md`
+
+If either file is missing, stop and tell the user to run the prior phase first. The user story defines **what** to build (acceptance criteria, business rules, actors). The test cases define **how to verify** it (HAPPY/EDGE/ERROR scenarios with expected results). Both are mandatory inputs — do not proceed without reading them.
+
 ## Checklist
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+1. **Read US + TC files** — read the user story and test case files provided as input. Extract: acceptance criteria, business rules, edge cases, error scenarios, and all TC IDs (H01, E01, R01, etc.)
+2. **Explore project context** — check existing source code, docs, recent commits relevant to the story
+3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
+4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+5. **Propose 2-3 approaches** — with trade-offs and your recommendation
+6. **Present design** — in sections scaled to their complexity, get user approval after each section
+7. **Write design doc** — save to `docs/features/<group>/US-<id>-<name>/specs/<topic>-design.md` (do NOT commit)
+8. **Spec self-review** — cross-check spec against ALL TC IDs from the test case file. Every HAPPY/EDGE/ERROR case must be covered by the design. Flag any gaps. Also check for placeholders, contradictions, ambiguity, scope (see below)
+9. **User reviews written spec** — ask user to review the spec file before proceeding
+10. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
@@ -69,7 +79,8 @@ digraph brainstorming {
 
 **Understanding the idea:**
 
-- Check out the current project state first (files, docs, recent commits)
+- **First, read the US-*.md and TC-*.md files** provided as input. These are the source of truth for what to build and how to verify it. Extract all acceptance criteria, business rules, edge cases, error scenarios, and TC IDs.
+- Then check out the current project state (existing source code, docs, recent commits relevant to the story)
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
@@ -108,25 +119,26 @@ digraph brainstorming {
 
 **Documentation:**
 
-- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-  - (User preferences for spec location override this default)
+- Write the validated design (spec) to `docs/features/<group>/US-<id>-<name>/specs/<topic>-design.md`
+  - The `<group>`, `<id>`, and `<name>` come from the user story being implemented. If brainstorming was invoked with a story path like `@docs/features/dispute/US-SP25-dispute-ui-optimization/US-SP25-dispute-ui-optimization.md`, extract the path components from there.
 - Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- Do NOT commit — the user will commit manually when ready
 
 **Spec Self-Review:**
 After writing the spec document, look at it with fresh eyes:
 
-1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
-2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
-3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
-4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
+1. **TC coverage check:** Cross-check the spec against every TC ID from the test case file. For each HAPPY (H01, H02...), EDGE (E01, E02...), and ERROR (R01, R02...) case, verify the spec's design covers the scenario. List any TC IDs not covered — these are gaps that must be fixed before proceeding.
+2. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
+3. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
+4. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
+5. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
 
 Fix any issues inline. No need to re-review — just fix and move on.
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+> "Spec written to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
 
 Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
 
