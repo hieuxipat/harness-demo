@@ -41,7 +41,7 @@ Done (or loop back to Phase 2 if failures)
 /task-explore <paste story description or Jira link>
 
 # Phase 2: Implement (chỉ cần mô tả cần build gì — superpowers tự kích hoạt)
-/brainstorming read @docs/user-stories/[group]/US-[id]-[name].md` and test cases `@docs/test-cases/[group]/TC-[id]-[name].md`
+/brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md
 
 # Phase 3: Verify
 /self-test
@@ -59,10 +59,10 @@ Done (or loop back to Phase 2 if failures)
 **What happens:**
 
 1. Claude đọc các requirements của story/task
-2. Mở browser thật (Playwright) và explore app với vai trò end-user — không đọc source code
-3. Chụp screenshot, điều hướng các flow, click button, điền form
-4. Tạo hoặc cập nhật **User Story** tại `docs/user-stories/[group]/US-[id]-[name].md`
-5. Viết **E2E Test Cases** tại `docs/test-cases/[group]/TC-[id]-[name].md` bao gồm:
+2. **Research current app** — chọn cách phù hợp nhất: mở browser thật bằng Playwright (tuỳ chọn, ưu tiên khi feature đã có trong app đang chạy), đọc docs hiện có trong `docs/features/`, xem Jira/linked tickets, hoặc đọc source code có chủ đích nếu cần. Không bắt buộc phải dùng tất cả phương pháp.
+3. **Hỏi lại để làm rõ** — nếu có bất kỳ điểm nào chưa rõ (actor/role, success criteria, error handling, edge case, business rule…), Claude phải dừng và hỏi user trước khi viết story. Mỗi câu hỏi đi kèm guess để user xác nhận nhanh.
+4. Tạo hoặc cập nhật **User Story** tại `docs/features/[group]/US-[id]-[name]/US-[id]-[name].md`
+5. Viết **E2E Test Cases** tại `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md` (cùng folder với story) bao gồm:
    - Happy path (luồng thành công tiêu chuẩn)
    - Edge cases (dữ liệu biên, điều kiện đặc biệt)
    - Error cases (lỗi validation, truy cập không được phép)
@@ -72,12 +72,14 @@ Done (or loop back to Phase 2 if failures)
 
 ```
 docs/
-  user-stories/
-    index.md
-    [group]/US-[id]-[name].md    <-- user story
-  test-cases/
-    index.md
-    [group]/TC-[id]-[name].md    <-- test cases (all PENDING)
+  superpowers/                              <-- plans, brainstorms từ superpowers
+  features/
+    index.md                                <-- top-level index of all groups
+    [group]/
+      index.md                              <-- per-group index
+      US-[id]-[name]/                       <-- one folder per story
+        US-[id]-[name].md                   <-- user story
+        TC-[id]-[name].md                   <-- test cases (all PENDING)
 ```
 
 **Your role:** Review user story và test cases. Xác nhận chúng khớp với kỳ vọng, điều chỉnh nếu cần, rồi cho phép tiếp tục.
@@ -86,7 +88,7 @@ docs/
 
 **Goal:** Build feature sử dụng Test-Driven Development.
 
-**Trigger:** Sau khi Phase 1 được approve, nói với Claude: `/brainstorming read @docs/user-stories/[group]/US-[id]-[name].md` and test cases `@docs/test-cases/[group]/TC-[id]-[name].md`
+**Trigger:** Sau khi Phase 1 được approve, nói với Claude: `/brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`
 
 **What happens (typical flow):**
 
@@ -116,7 +118,7 @@ docs/
 
 **What happens:**
 
-1. Claude đọc test cases từ `docs/test-cases/[group]/TC-[id]-[name].md`
+1. Claude đọc test cases từ `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`
 2. Mở headed browser (Playwright) và thực thi từng test case theo từng bước
 3. So sánh kết quả thực tế với expected results
 4. Kiểm tra regression risk với các story liên quan
@@ -154,7 +156,7 @@ Details:
 3. Cập nhật **Test Cases** — sửa expected results, thêm case mới cho edge case phát hiện được, reset kết quả bị ảnh hưởng về `PENDING`
 4. Sync **Unit Tests** — tạo hoặc cập nhật test file trong `src/__tests__/` để khớp với thay đổi code, sau đó chạy chúng
 5. Sync **E2E Tests** — tạo hoặc cập nhật spec file trong `tests/e2e/` để khớp với thay đổi flow, sau đó chạy chúng
-6. Cập nhật **Index Files** — đảm bảo `docs/user-stories/index.md` và `docs/test-cases/index.md` chính xác
+6. Cập nhật **Index Files** — đảm bảo `docs/features/index.md` (top-level) và mỗi `docs/features/[group]/index.md` chính xác
 7. Cross-reference check — xác minh tất cả link giữa stories, test cases và index file còn nguyên vẹn
 8. Xuất sync report:
 

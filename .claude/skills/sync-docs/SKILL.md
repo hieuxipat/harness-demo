@@ -19,14 +19,16 @@ Analyze code changes and synchronize all documentation artifacts — user storie
 
 ## Output
 
-| Artifact           | Path                                          | Action                  |
-| ------------------ | --------------------------------------------- | ----------------------- |
-| User Stories       | `docs/user-stories/[group]/US-[id]-[name].md` | Create / Update         |
-| Test Cases         | `docs/test-cases/[group]/TC-[id]-[name].md`   | Create / Update         |
-| User Stories Index | `docs/user-stories/index.md`                  | Update                  |
-| Test Cases Index   | `docs/test-cases/index.md`                    | Update                  |
-| Unit Tests         | `src/__tests__/[category]/[Name].test.ts(x)`  | Create / Update / Run   |
-| E2E Tests          | `tests/e2e/[name].spec.ts`                    | Create / Update / Run   |
+| Artifact           | Path                                                               | Action                  |
+| ------------------ | ------------------------------------------------------------------ | ----------------------- |
+| User Stories       | `docs/features/[group]/US-[id]-[name]/US-[id]-[name].md`           | Create / Update         |
+| Test Cases         | `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`           | Create / Update         |
+| Group Index        | `docs/features/[group]/index.md`                                   | Update                  |
+| Features Index     | `docs/features/index.md`                                           | Update                  |
+| Unit Tests         | `src/__tests__/[category]/[Name].test.ts(x)`                       | Create / Update / Run   |
+| E2E Tests          | `tests/e2e/[name].spec.ts`                                         | Create / Update / Run   |
+
+The user story and test case files for a single story live **side by side** in `docs/features/[group]/US-[id]-[name]/`. Preserve this co-location whenever you create or move files.
 
 ---
 
@@ -52,7 +54,7 @@ git diff
 
 From the diff, identify:
 
-1. **Which features/stories are affected** — map changed files to stories using the route layout in CLAUDE.md and existing docs in `docs/user-stories/`
+1. **Which features/stories are affected** — map changed files to stories using the route layout in CLAUDE.md and existing docs under `docs/features/`
 2. **What kind of changes**: new feature, behavior change, bug fix, refactor, UI change
 3. **Scope of impact**: does this affect acceptance criteria? user flow? test expectations?
 
@@ -60,11 +62,11 @@ From the diff, identify:
 
 Read the current state of all potentially affected docs:
 
-1. Read `docs/user-stories/index.md` — get the full list of documented stories
-2. Read `docs/test-cases/index.md` — get the full list of documented test cases
-3. For each affected feature, read:
-   - `docs/user-stories/[group]/US-[id]-[name].md`
-   - `docs/test-cases/[group]/TC-[id]-[name].md`
+1. Read `docs/features/index.md` — get the full list of documented groups / stories
+2. Read each relevant `docs/features/[group]/index.md` — get the per-group story / test case list
+3. For each affected feature, read both files in its story folder:
+   - `docs/features/[group]/US-[id]-[name]/US-[id]-[name].md`
+   - `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`
 
 Build a change map:
 
@@ -78,9 +80,9 @@ Build a change map:
 
 For each affected user story:
 
-- **If story exists and behavior changed**: update the relevant sections (acceptance criteria, steps, notes). Add a `Last synced` date at the bottom.
+- **If story exists and behavior changed**: update the relevant sections (acceptance criteria, steps, notes) inside `docs/features/[group]/US-[id]-[name]/US-[id]-[name].md`. Add a `Last synced` date at the bottom.
 - **If story exists but only internal refactor**: no update needed — note "no doc changes" in the change map.
-- **If a new feature was added without a story**: create a new `US-[id]-[name].md` following the schema from `task-explore` skill.
+- **If a new feature was added without a story**: create the story folder `docs/features/[group]/US-[id]-[name]/` and write a new `US-[id]-[name].md` inside it, following the schema from the `task-explore` skill.
 
 **User Story schema reminder:**
 
@@ -169,18 +171,18 @@ If tests fail, fix the test (or flag the implementation issue) before proceeding
 
 ### Step 7 — Update Index Files
 
-After all doc and test updates:
+After all doc and test updates, refresh both index layers:
 
-1. **`docs/user-stories/index.md`**: ensure every story file has an entry. Add new entries for newly created stories. Update descriptions if they no longer match.
-2. **`docs/test-cases/index.md`**: ensure every test case file has an entry. Update the count summary (e.g., "14 test cases (7 happy path, 5 edge case, 2 error case)") to reflect actual counts.
+1. **`docs/features/[group]/index.md`** (per-group): ensure every story folder in this group has an entry. List the user story file and its sibling test case file. Update the test case count summary (e.g., "14 test cases — 7 happy path, 5 edge case, 2 error case") to reflect actual counts.
+2. **`docs/features/index.md`** (top-level): ensure every group has an entry, and update story counts / descriptions when groups are added or stories move.
 
 ### Step 8 — Cross-reference Check
 
 Verify bidirectional links are intact:
 
-- Each test case file links back to its user story
+- Each test case file links back to its sibling user story file (they live in the same `US-[id]-[name]/` folder, so links should be relative)
 - Each user story references its test case file (if applicable)
-- Index files have correct relative paths
+- Both index layers (`docs/features/index.md` and each `docs/features/[group]/index.md`) have correct relative paths
 - No broken links to deleted or renamed files
 
 ### Step 9 — Summary Report

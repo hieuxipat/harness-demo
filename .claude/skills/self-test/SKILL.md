@@ -13,7 +13,7 @@ Run E2E tests after implementation — follow existing test cases, record result
 ## Input
 
 - A feature that has been implemented
-- The corresponding test cases at `docs/test-cases/[group]/TC-[id]-[name].md`
+- The corresponding test cases at `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`
 
 ---
 
@@ -27,7 +27,7 @@ Updated test-result, test-result-note on test cases file
 
 ### Step 1 — Read test cases
 
-- Find the file `docs/test-cases/[group]/TC-[id]-[name].md` corresponding to the feature
+- Find the file `docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md` corresponding to the feature (the test case file lives next to its user story in the same folder)
 - If it doesn't exist, notify that `task-explore` needs to be run first
 - Parse all test cases: happy path, edge case, error case
 - **Skip any test case marked `BYPASS`** — these are known limitations or intentionally excluded. Do not execute them; carry forward their existing result as-is.
@@ -50,7 +50,7 @@ For each test case:
 
 ### Step 3 — Regression check
 
-- Check related stories in `docs/user-stories/index.md`
+- Check related stories via `docs/features/index.md` and the relevant `docs/features/[group]/index.md`
 - If there are potentially affected stories, mark `regression_risk: HIGH`
 - Run a quick smoke test on adjacent stories if needed
 

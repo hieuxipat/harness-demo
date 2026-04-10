@@ -2,7 +2,7 @@
 
 - **ID:** TC-SP25-dispute-ui-optimization
 - **Group:** dispute
-- **Linked Story:** US-SP25-dispute-ui-optimization
+- **Linked Story:** [US-SP25-dispute-ui-optimization.md](./US-SP25-dispute-ui-optimization.md)
 
 ---
 

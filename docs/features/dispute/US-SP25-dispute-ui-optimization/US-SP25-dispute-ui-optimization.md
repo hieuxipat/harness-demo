@@ -3,6 +3,7 @@
 - **ID:** US-SP25-dispute-ui-optimization
 - **Group:** dispute
 - **Jira:** [SP-25](https://synctrackreturns.atlassian.net/browse/SP-25)
+- **Test Cases:** [TC-SP25-dispute-ui-optimization.md](./TC-SP25-dispute-ui-optimization.md)
 
 ## Goal
 
