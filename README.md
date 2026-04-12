@@ -8,6 +8,8 @@ Boilerplate cài đặt quy trình phát triển hỗ trợ bởi AI vào một 
 # Phase 1: Explore Story — xác minh feasibility, clarify, split nếu cần
 /explore-story <mô tả story hoặc Jira link>
 # → Gửi story cho PO, nhận câu trả lời, tự edit vào file
+# → (Helper) Dùng /po-qa-loop để đi từng câu hỏi PO, auto edit vào file
+/po-qa-loop docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
 
 # Phase 2: Create Test Case — sinh test case từ story đã validate
 /create-test-case docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
@@ -112,8 +114,41 @@ docs/features/
 ### Your role
 
 1. Nếu BLOCKED → xử lý chỗ bị chặn, chạy lại
-2. Nếu có story → gửi PO, nhận câu trả lời, tự edit vào file
+2. Nếu có story → gửi PO, nhận câu trả lời, tự edit vào file (hoặc dùng `/po-qa-loop` bên dưới)
 3. Khi mọi blocking question đã resolve → chạy `/create-test-case`
+
+### Helper: `/po-qa-loop`
+
+**Goal:** Đi qua section `## Open questions for PO` từng câu một, ghi câu trả lời PO vào file, tự cập nhật acceptance criteria khi answer khác best guess, và flag khi answer mở rộng scope.
+
+**Trigger:**
+
+```bash
+/po-qa-loop docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
+# hoặc truyền folder group (xử lý theo dependency order từ index.md)
+/po-qa-loop docs/features/[group]/
+# hoặc không tham số → scan tất cả US-*.md còn question chưa resolve
+/po-qa-loop
+```
+
+### Flow
+
+1. Parse section `## Open questions for PO` (blocking trước, non-blocking sau)
+2. Với mỗi câu hỏi chưa trả lời → gửi 1 message/lần (question + why it matters + best guess)
+3. User reply:
+   - `ok` / `ok best guess` → accept best guess
+   - Paste câu trả lời PO → áp dụng case A/B/C
+   - `skip` → để lại, tiếp câu sau
+4. Ghi đĩa **sau mỗi câu trả lời** (crash-safe, resume được)
+5. Khi hết câu → rewrite section thành `None — ready for /create-test-case` (nếu đã resolve hết)
+
+### Rules
+
+- **Không tự guess answer** — reply ambiguous → hỏi lại
+- **1 question/message** — không gộp
+- **Không auto-run `/explore-story` hay `/create-test-case`** — chỉ flag và gợi ý
+- **Không delete content PO đã viết** — edit xung quanh, không overwrite
+- **Answer mở rộng scope → KHÔNG edit body** — chỉ ghi `answered:` với dấu ⚠ để user chạy refine mode
 
 ## Phase 2: Create Test Case (`/create-test-case`)
 
