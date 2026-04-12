@@ -292,7 +292,7 @@ This workspace uses the 4-phase AI-assisted development workflow installed by me
 
 1. **Explore Story** (`/explore-story`) — research feasibility, write user story
 2. **Create Test Case** (`/create-test-case`) — generate manual test cases
-3. **Implement** (`/brainstorming ... read @US and @TC`) — brainstorm → plan → TDD
+3. **Implement** (`/sp-brainstorming ... read @US and @TC`) — brainstorm → plan → TDD
 4. **Verify & Sync** (`/self-test`) — run test cases, sync docs
 
 See the copied sections at the bottom for full workflow rules.

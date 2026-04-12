@@ -181,7 +181,7 @@ All cases:     PENDING
 Waiting for human review before implementation
 ```
 
-Once the human approves, the next step is `/brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`.
+Once the human approves, the next step is `/sp-brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md`.
 
 ---
 
