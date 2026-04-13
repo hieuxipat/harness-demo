@@ -36,6 +36,3 @@ build/
 .env
 .env.*
 
-# Workspace
-age-workspace/
-age-workspace2/
