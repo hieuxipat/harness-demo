@@ -5,6 +5,22 @@ description: Use this skill to walk through the `## Open questions for PO` secti
 
 # po-qa-loop
 
+## Output language
+
+Khi cập nhật file `US-*.md`, mọi nội dung tự do (lời `answered:`, ghi chú, acceptance criteria/steps được sửa khi rơi vào Case B) viết bằng **tiếng Việt có dấu**. Tin nhắn hỏi user trong Q&A loop cũng dùng tiếng Việt.
+
+**BẮT BUỘC giữ tiếng Anh (không dịch):**
+- Section anchor: `## Open questions for PO` — phải khớp chính xác để skill khác parse
+- Key trong mỗi entry: `Why it matters:`, `Best guess:`, `answered:`
+- Tag priority: `**(blocking)**`, `**(non-blocking)**`
+- Marker đóng section: `None — ready for /create-test-case.`
+- File ID `US-*`, path `docs/features/...`, slash command `/explore-story`, `/create-test-case`
+- Marker scope expansion: giữ ký tự `⚠ scope expansion, needs /explore-story refine mode` (các skill khác có thể grep)
+
+Khi PO trả lời bằng tiếng Anh, vẫn ghi `answered:` bằng tiếng Việt (paraphrase) để team đọc nhanh — paste nguyên văn tiếng Anh trong dấu ngoặc nếu cần đối chiếu.
+
+---
+
 Walk a user through the `## Open questions for PO` section of one or more story files, capture the PO's answer for each question (one at a time), and update the story file in place so it stays consistent with the 4-phase workflow's contract. The human owns the PO loop — this skill is the scribe that records what comes back.
 
 ## Why this skill exists

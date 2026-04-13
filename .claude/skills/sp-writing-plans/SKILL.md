@@ -5,6 +5,21 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 # Writing Plans
 
+## Output language
+
+File plan output (`docs/features/<group>/US-<id>-<name>/plans/<feature>.md`) PHẢI viết bằng **tiếng Việt có dấu** ở các phần diễn giải: Goal, Architecture, mô tả task, lý do quyết định, Expected output (phần text), self-review note. Câu hỏi và lựa chọn execution mode trong chat cũng dùng tiếng Việt.
+
+**Giữ tiếng Anh (không dịch):**
+- Header bắt buộc: `# [Feature Name] Implementation Plan`, `**Goal:**`, `**Architecture:**`, `**Tech Stack:**`, `### Task N:`, `**Files:**`, `- [ ] **Step N: ...**` — đây là khung hard-coded mà `sp-executing-plans` / `sp-subagent-driven-development` parse
+- Checkbox syntax `- [ ]` / `- [x]`
+- Code block, command, file path, type/function name
+- Marker `Create:`, `Modify:`, `Test:`, `Run:`, `Expected:` ở đầu dòng (giữ Anh, nội dung sau viết tiếng Việt nếu là mô tả)
+- Slash command, sub-skill name (`sp-subagent-driven-development`, `sp-executing-plans`, `sp-test-driven-development`)
+
+Tên task và mô tả step có thể viết tiếng Việt: `**Step 1: Viết test thất bại trước**`, `**Step 2: Chạy test để xác nhận FAIL**`, v.v. Nhưng `Expected: FAIL`, `Expected: PASS` giữ tiếng Anh để khớp output thực tế của test runner.
+
+---
+
 ## Overview
 
 Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD.

@@ -5,6 +5,20 @@ description: "You MUST use this before any creative work - creating features, bu
 
 # Brainstorming Ideas Into Designs
 
+## Output language
+
+File spec output (`docs/features/<group>/US-<id>-<name>/specs/<topic>-design.md`) PHẢI viết bằng **tiếng Việt có dấu** — bao gồm: tổng quan, kiến trúc, components, data flow, error handling, testing strategy, các section diễn giải. Câu hỏi clarifying và phần trình bày approach trong chat cũng dùng tiếng Việt.
+
+**Giữ tiếng Anh (không dịch):**
+- Code block, type signature, function/class/route/endpoint name
+- Tên file, path, slash command (`/sp-brainstorming`, `sp-writing-plans`)
+- Reference đến TC ID: `H01`, `E01`, `R01` và `TC-<id>-<name>-*` (cross-check coverage dùng ID này)
+- Tên kỹ thuật trong dependency / library
+
+Khi cross-check spec với TC, dùng đúng ID tiếng Anh; phần giải thích xung quanh viết tiếng Việt.
+
+---
+
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.

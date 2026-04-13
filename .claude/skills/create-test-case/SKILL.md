@@ -6,6 +6,36 @@ description: >
 
 # create-test-case
 
+## Output language
+
+Tất cả nội dung tự do trong `TC-*.md` (description, precondition, steps, expected_result, header note, mục mô tả mode UI/Backend/Mixed, summary count line) PHẢI viết bằng **tiếng Việt có dấu** để dev và QA dễ review.
+
+**BẮT BUỘC giữ tiếng Anh (không dịch — `self-test` và các skill khác grep/parse):**
+- Section heading cấp 1: `## HAPPY`, `## EDGE`, `## ERROR` — KHÔNG đổi thành `## HẠNH PHÚC` v.v., vì `self-test` đếm test case theo header này.
+- YAML frontmatter keys: `test_cases:`, `id:`, `group:`, `linked_story:`, `summary:`, `happy:`, `edge:`, `error:`, `cases:`, `test-result:`, `test-result-note:`, `type:`, `description:`, `precondition:`, `steps:`, `expected_result:`
+- Enum values: `PENDING`, `PASS`, `FAIL`, `BYPASS`, `happy_path`, `edge_case`, `error_case`
+- Test case ID prefix: `TC-<id>-<name>-H01`, `-E01`, `-R01` (chữ H/E/R không đổi)
+- File ID & path: `US-<id>-<name>`, `TC-<id>-<name>`, `docs/features/...`, slash command `/self-test`, `/explore-story`, `/sp-brainstorming`
+
+Steps mô tả request HTTP/route/curl giữ nguyên dạng kỹ thuật; phần diễn giải xung quanh viết tiếng Việt.
+
+Ví dụ ngắn (đúng):
+```markdown
+## HAPPY
+
+### TC-SP25-dispute-H01 — Người dùng admin xuất CSV thành công
+- type: happy_path
+- test-result: PENDING
+- description: Admin nhấn nút **Xuất CSV** trên trang Tranh chấp khi có dữ liệu hợp lệ.
+- precondition: Đã đăng nhập với role admin, có ít nhất 1 dispute ở trạng thái `pending`.
+- steps:
+  1. Mở `/disputes`
+  2. Nhấn nút **Xuất CSV**
+- expected_result: File `disputes-YYYY-MM-DD.csv` được tải về, chứa đủ các cột theo spec.
+```
+
+---
+
 Given an approved user story, produce a manual test case file with three clearly separated sections: **HAPPY**, **EDGE**, and **ERROR**.
 
 This skill never researches the app, never splits stories, and never writes implementation code. If the story does not exist yet, the `explore-story` skill must run first.

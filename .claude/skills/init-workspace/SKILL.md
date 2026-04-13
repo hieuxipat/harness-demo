@@ -2,7 +2,7 @@
 name: init-workspace
 description: >
   Khởi tạo workspace mới từ boilerplate: tạo folder workspace bên trong boilerplate,
-  copy .claude, chrome-profile, docs vào workspace, clone subprojects (có SSH→HTTPS fallback),
+  copy .claude, chrome-profile, docs vào workspace, clone subprojects bằng HTTPS (có SSH fallback nếu user nhập SSH URL),
   phân tích tech stack và mối tương quan giữa subprojects để generate CLAUDE.md workspace,
   kiểm tra Claude setup trong từng subproject, cấu hình remote GitLab, init git.
   Giữ nguyên git của boilerplate. Dùng khi user nói "init workspace", "setup project",
@@ -11,12 +11,18 @@ description: >
 
 # Init Workspace
 
+## Output language
+
+CLAUDE.md workspace, README, mọi message hỏi user và summary đều viết bằng **tiếng Việt có dấu**. Giữ tiếng Anh các phần kỹ thuật: tên path, lệnh `git`/`bash`, slash command, header bảng `Folder | Repo | Stack | Claude setup`, tên framework/lib (Next.js, Express...), key trong package.json/composer.json. Section "Workflow rules that override defaults" copy nguyên văn từ boilerplate (giữ tiếng Anh) để khớp contract của các skill khác.
+
+---
+
 Tạo workspace mới **bên trong** thư mục megamind-ai-boilerplate. Boilerplate giữ nguyên git repo. Workspace mới có git repo riêng.
 
 ## Nguyên tắc chính
 
 1. **Clone subprojects TRƯỚC khi commit workspace.** CLAUDE.md và initial commit phản ánh trạng thái thật (đã clone được những project nào, tech stack gì).
-2. **SSH clone fail → thử HTTPS trước khi bỏ cuộc.** Chỉ log warning nếu cả hai đều fail.
+2. **Mặc định clone bằng HTTPS.** Nếu user nhập SSH URL → tự convert sang HTTPS trước khi clone. Nếu HTTPS fail → thử URL gốc (SSH) làm fallback. Chỉ log warning nếu cả hai đều fail.
 3. **Luôn dùng absolute path trong Bash calls.** Không `cd` giữa các call (state không persist giữa các Bash tool call).
 4. **Phân tích subproject để viết CLAUDE.md có giá trị.** Đọc `package.json`, `README.md`, detect framework. Không chỉ liệt kê bảng repo.
 5. **Không tự tạo `CLAUDE.md` trong subproject.** Subproject có git repo riêng của team khác; chỉ phát hiện thiếu và gợi ý user.
@@ -78,8 +84,9 @@ Tên app hiển thị? (vd: Order Tracking)
 **Câu 3 (tuỳ chọn): GitLab remote URL cho workspace**
 
 ```
-GitLab remote URL cho workspace? (vd: git@gitlab.com:megamind/ordertracking-workspace.git)
+GitLab remote URL cho workspace? (vd: https://gitlab.com/megamind/ordertracking-workspace.git)
 → Nhập 'skip' hoặc Enter để bỏ qua (có thể thêm sau)
+→ Khuyến nghị dùng HTTPS URL. Nếu nhập SSH URL, sẽ được dùng nguyên.
 ```
 
 - Nếu user trả lời "skip", "không có", trống → `REMOTE_URL = none`
@@ -90,12 +97,13 @@ GitLab remote URL cho workspace? (vd: git@gitlab.com:megamind/ordertracking-work
 ```
 Các dự án con muốn kéo vào workspace?
 → Format: "<folder-name> <git-url>" hoặc "<folder-name>: <git-url>" (1 project/dòng)
+→ Khuyến nghị dùng HTTPS URL. Nếu nhập SSH URL, skill sẽ tự convert sang HTTPS để clone.
 → Nhập 'done' hoặc Enter để kết thúc
 → Nhập 'skip' nếu chưa có
 
 Ví dụ:
-  backend git@gitlab.com:megamind/ordertracking-backend.git
-  frontend: git@gitlab.com:megamind/ordertracking-frontend.git
+  backend https://gitlab.com/megamind/ordertracking-backend.git
+  frontend: https://gitlab.com/megamind/ordertracking-frontend.git
   done
 ```
 
@@ -106,8 +114,9 @@ Ví dụ:
 - Nếu user trả lời "skip", "done", trống → danh sách rỗng.
 
 **Ví dụ parse:**
-- `backend: git@gitlab.com:org/repo.git` → folder `backend`, url `git@gitlab.com:org/repo.git` ✓
-- `backend git@gitlab.com:org/repo.git` → folder `backend`, url `git@gitlab.com:org/repo.git` ✓
+- `backend: https://gitlab.com/org/repo.git` → folder `backend`, url `https://gitlab.com/org/repo.git` ✓
+- `backend https://gitlab.com/org/repo.git` → folder `backend`, url `https://gitlab.com/org/repo.git` ✓
+- `backend: git@gitlab.com:org/repo.git` → folder `backend`, url `git@gitlab.com:org/repo.git` ✓ (sẽ convert sang HTTPS ở bước clone)
 - ❌ `split(":")` sai: tạo ra 3 phần `["backend", " git@gitlab.com", "org/repo.git"]`.
 
 ### Bước 2: Xác nhận
@@ -121,11 +130,11 @@ Hiển thị summary **CHỈ những gì user đã cung cấp**. Mục skip ghi 
   Workspace:    age-workspace
   Location:     /path/to/boilerplate/age-workspace/
   App name:     Age Verification
-  Remote:       git@gitlab.com:megamind/age-workspace.git
+  Remote:       https://gitlab.com/megamind/age-workspace.git
                 (hoặc: "— chưa có, sẽ thêm sau")
-  Subprojects:
-    - backend/   ← git@gitlab.com:megamind/age-backend.git
-    - frontend/  ← git@gitlab.com:megamind/age-frontend.git
+  Subprojects:  (clone bằng HTTPS — SSH URL nếu nhập sẽ tự convert)
+    - backend/   ← https://gitlab.com/megamind/age-backend.git
+    - frontend/  ← https://gitlab.com/megamind/age-frontend.git
                 (hoặc: "— không có subproject")
 ╚══════════════════════════════════════════════════════════════════╝
 
@@ -214,7 +223,7 @@ build/
 .env.*
 ```
 
-#### 3.5 Clone subprojects (VỚI SSH→HTTPS fallback)
+#### 3.5 Clone subprojects (HTTPS-first, SSH fallback nếu user nhập SSH)
 
 **Chỉ thực hiện nếu có subprojects.** Chạy song song nhiều subproject bằng multiple Bash calls trong 1 message.
 
@@ -222,35 +231,40 @@ Với mỗi subproject:
 
 **Quan trọng — chặn hang:** luôn set `GIT_TERMINAL_PROMPT=0` để git không hỏi username/password tương tác (sẽ treo forever trong tool call). Và luôn dùng Bash với `timeout` ≤ 60000ms (60s) cho mỗi attempt, để host unreachable không làm cả flow hang 2 phút mỗi lần.
 
-**Step 1 — Thử SSH URL (URL user cung cấp):**
+**Step 0 — Chuẩn hoá URL về HTTPS:**
 
-```bash
-GIT_TERMINAL_PROMPT=0 git clone "$SUBPROJECT_URL" "$WORKSPACE_DIR/$FOLDER_NAME" 2>&1
-```
-(Bash tool call: set `timeout: 60000`.)
+- Nếu URL bắt đầu bằng `https://` → giữ nguyên. `HTTPS_URL = $SUBPROJECT_URL`. `SSH_URL = none`.
+- Nếu URL bắt đầu bằng `git@` (SSH) → convert sang HTTPS:
+  - `git@<host>:<path>.git` → `https://<host>/<path>.git`
+  - Ví dụ: `git@gitlab.xipat.com:megaminds/megamind-age-verify-backend.git` → `https://gitlab.xipat.com/megaminds/megamind-age-verify-backend.git`
+  - `HTTPS_URL = <converted>`. `SSH_URL = $SUBPROJECT_URL` (giữ làm fallback).
+- Nếu URL không nhận dạng được → dùng nguyên gốc làm `HTTPS_URL`, `SSH_URL = none`.
 
-**Step 2 — Nếu SSH fail (exit code ≠ 0), thử HTTPS fallback:**
-
-Convert SSH URL → HTTPS URL:
-- `git@<host>:<path>.git` → `https://<host>/<path>.git`
-- Ví dụ: `git@gitlab.xipat.com:megaminds/megamind-age-verify-backend.git` → `https://gitlab.xipat.com/megaminds/megamind-age-verify-backend.git`
+**Step 1 — Thử HTTPS URL (mặc định):**
 
 ```bash
 GIT_TERMINAL_PROMPT=0 git clone "$HTTPS_URL" "$WORKSPACE_DIR/$FOLDER_NAME" 2>&1
 ```
 (Bash tool call: set `timeout: 60000`.)
 
-Thông báo user: `"SSH clone failed, thử HTTPS fallback..."`
+**Step 2 — Nếu HTTPS fail (exit code ≠ 0) VÀ có `SSH_URL`, thử SSH fallback:**
 
-**Không skip HTTPS fallback** kể cả khi nhìn URL/host "có vẻ không tồn tại". Lý do cho skip phải là exit code thật từ SSH attempt, không phải suy đoán.
+```bash
+GIT_TERMINAL_PROMPT=0 git clone "$SSH_URL" "$WORKSPACE_DIR/$FOLDER_NAME" 2>&1
+```
+(Bash tool call: set `timeout: 60000`.)
 
-**Step 3 — Nếu cả hai đều fail:**
+Thông báo user: `"HTTPS clone failed, thử SSH fallback (URL gốc)..."`
+
+**Không skip SSH fallback** kể cả khi nhìn URL "có vẻ không tồn tại". Lý do cho skip phải là exit code thật từ HTTPS attempt, không phải suy đoán. Nếu user chỉ nhập HTTPS URL (không có SSH gốc) → bỏ qua step 2.
+
+**Step 3 — Nếu cả hai đều fail (hoặc HTTPS fail mà không có SSH gốc):**
 
 - Log warning, **KHÔNG dừng flow**, tiếp tục clone các subproject còn lại:
   ```
-  ⚠️ Clone <folder>/ failed (cả SSH và HTTPS).
-     SSH URL: <ssh-url>
+  ⚠️ Clone <folder>/ failed.
      HTTPS URL: <https-url>
+     SSH URL: <ssh-url hoặc "— user không cung cấp">
      Có thể do: chưa kết nối VPN, không có quyền access, hoặc repo không tồn tại.
      Bạn có thể clone sau khi fix: cd <workspace-path> && git clone <url> <folder>
   ```
@@ -258,7 +272,7 @@ Thông báo user: `"SSH clone failed, thử HTTPS fallback..."`
 
 **Ghi nhận kết quả:** với mỗi subproject, lưu:
 - `folder_name`
-- `url_used` (ssh hoặc https)
+- `url_used` (https hoặc ssh)
 - `status` (success / failed)
 
 #### 3.6 Phân tích subprojects và generate CLAUDE.md workspace
@@ -305,8 +319,8 @@ Workspace này gồm các dự án con, mỗi dự án có git repo riêng:
 
 | Folder | Repo | Stack | Claude setup |
 |--------|------|-------|--------------|
-| `backend/` | git@gitlab.com:...backend.git | Node.js + Express (detected từ package.json) | ✅ CLAUDE.md + .claude/ |
-| `frontend/` | git@gitlab.com:...frontend.git | Next.js 14 + Shopify Polaris | ⚠️ Chưa có CLAUDE.md — chạy `/init` trong `frontend/` để tạo |
+| `backend/` | https://gitlab.com/...backend.git | Node.js + Express (detected từ package.json) | ✅ CLAUDE.md + .claude/ |
+| `frontend/` | https://gitlab.com/...frontend.git | Next.js 14 + Shopify Polaris | ⚠️ Chưa có CLAUDE.md — chạy `/init` trong `frontend/` để tạo |
 | `<folder>/` | — | ⚠️ Clone failed — chưa có data | — |
 
 ### Tổng quan từng subproject
@@ -368,8 +382,11 @@ git -C "$WORKSPACE_DIR" remote add origin "$REMOTE_URL"
 git -C "$WORKSPACE_DIR" push -u origin main
 ```
 
-- Nếu push fail (SSH timeout, repo chưa tồn tại trên GitLab, etc.):
-  - Thử HTTPS fallback (nếu URL là SSH) bằng cách đổi remote URL và push lại.
+**Khuyến nghị:** dùng HTTPS URL cho remote. Nếu user nhập SSH URL, vẫn dùng nguyên (không tự convert ở bước này — remote là long-lived config, để user chủ động chọn).
+
+- Nếu push fail (timeout, repo chưa tồn tại trên GitLab, auth fail, etc.):
+  - Nếu URL là SSH → thử HTTPS fallback (convert SSH→HTTPS như ở bước 3.5) bằng cách đổi remote URL và push lại.
+  - Nếu URL là HTTPS → thử lại 1 lần (có thể là transient). Không tự fallback sang SSH (SSH cần key setup).
   - Vẫn fail → log warning, KHÔNG dừng flow:
     ```
     ⚠️ Push failed (cả SSH và HTTPS).
@@ -403,12 +420,12 @@ Workspace initialized!
 
   Location:     /path/to/boilerplate/age-workspace/
   App name:     Age Verification
-  Remote:       git@gitlab.com:megamind/age-workspace.git (pushed)
+  Remote:       https://gitlab.com/megamind/age-workspace.git (pushed)
                 (hoặc: "— chưa cấu hình" / "⚠️ push failed")
   Branch:       main
   Subprojects:
-    backend/    ✅ cloned (SSH) — Node.js + Express — has CLAUDE.md
-    frontend/   ✅ cloned (HTTPS fallback) — Next.js — ⚠️ no CLAUDE.md
+    backend/    ✅ cloned (HTTPS) — Node.js + Express — has CLAUDE.md
+    frontend/   ✅ cloned (SSH fallback) — Next.js — ⚠️ no CLAUDE.md
                 (hoặc: "⚠️ failed" / "— không có subproject")
 
   Boilerplate:  giữ nguyên tại /path/to/boilerplate/ (đã thêm vào .gitignore)
@@ -440,8 +457,9 @@ Next steps:
 | Workspace name không hợp lệ | Giải thích regex, hỏi lại |
 | Folder workspace đã tồn tại | Báo lỗi, hỏi chọn tên khác hoặc xác nhận ghi đè |
 | Subproject input format sai | Parse nới lỏng (space / `:`), strip trailing `:`, thử lại |
-| SSH clone fail | Tự động thử HTTPS fallback trước khi bỏ cuộc |
-| Cả SSH và HTTPS fail | Warning, tiếp tục clone project khác, gợi ý lệnh manual |
+| User nhập SSH URL cho subproject | Convert sang HTTPS trước khi clone, giữ SSH gốc làm fallback |
+| HTTPS clone fail | Nếu user cung cấp SSH gốc → thử SSH fallback. Nếu chỉ có HTTPS → log warning |
+| Cả HTTPS và SSH fail | Warning, tiếp tục clone project khác, gợi ý lệnh manual |
 | Push fail | Thử HTTPS fallback (nếu URL là SSH), sau đó warning |
 | User "no" ở confirm | Hỏi muốn sửa gì, quay lại câu hỏi đó |
 | Copy file fail | Log warning, tiếp tục các file còn lại |

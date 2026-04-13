@@ -6,6 +6,22 @@ description: >
 
 # explore-story
 
+## Output language
+
+Tất cả nội dung tự do trong file output (story body, title, goal, actor, acceptance criteria, steps, notes, feasibility notes/evidence/gaps, mục `## Open questions for PO`, BLOCKED report) PHẢI viết bằng **tiếng Việt có dấu** để dev và PO trong team dễ review.
+
+**BẮT BUỘC giữ tiếng Anh (không dịch — đây là contract giữa các skill, dùng để grep/parse):**
+- YAML frontmatter keys: `user_story:`, `id:`, `group:`, `title:`, `goal:`, `actor:`, `status:`, `acceptance_criteria:`, `steps:`, `feasibility:`, `verdict:`, `notes:`, `evidence:`, `gaps:`, `last_verified:`, `open_questions_for_po:`, `question`, `why_it_matters`, `best_guess`, `answered`
+- Enum values: `DRAFT`, `DONE`, `FEASIBLE`, `FEASIBLE_WITH_CHANGES`, `BLOCKED`, `blocking`, `non-blocking`
+- Section anchor: `## Open questions for PO` (giữ nguyên — `po-qa-loop` và `create-test-case` grep header này)
+- File ID & path: `US-<id>-<name>`, `docs/features/...`, slash command `/explore-story`, `/create-test-case`
+- Định dạng date: `YYYY-MM-DD`
+- Bullet helper trong phần "Open questions for PO" giữ key tiếng Anh: `Why it matters:`, `Best guess:`, `answered:` (nội dung sau dấu `:` viết tiếng Việt)
+
+Code identifier, route, tên file, tên biến trong evidence vẫn giữ nguyên dạng kỹ thuật.
+
+---
+
 Research the current app, verify that a story is feasible (**hard-stop with proof if it is not**), optionally split it into smaller Agile stories, and leave a list of **business-logic questions** at the end of each written story for the Product Owner to answer. The target of this phase is to produce stories the PO can read, forward to stakeholders if needed, and validate.
 
 This skill does **not** write test cases. It does **not** block the chat waiting for answers — open questions live at the **end of each written story**. The human forwards the story to the PO, the PO answers, the human edits the story file with the answers, and only then is the story ready to feed into `/create-test-case`.

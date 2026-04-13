@@ -6,6 +6,32 @@ description: >
 
 # self-test
 
+## Output language
+
+Khi cập nhật `US-*.md`, `TC-*.md`, index, và khi in báo cáo cuối cùng — nội dung tự do (test-result-note, sync note, regression note, mô tả symptom của FAIL, body section "Last synced", phần "Details" trong report) viết bằng **tiếng Việt có dấu** để team đọc nhanh.
+
+**TUYỆT ĐỐI giữ tiếng Anh (không dịch — skill này lệ thuộc vào những giá trị này để parse):**
+- Section heading trong TC file: `## HAPPY`, `## EDGE`, `## ERROR` — đếm số case theo header này
+- Enum status: `DRAFT`, `DONE`, `PENDING`, `PASS`, `FAIL`, `BYPASS`
+- Type enum: `happy_path`, `edge_case`, `error_case`
+- YAML keys: `status:`, `test-result:`, `test-result-note:`, `type:`, `feasibility:`, `verdict:`, `last_verified:`
+- Test case ID prefix: `-H01`, `-E01`, `-R01`
+- Stamp header: `Last run: YYYY-MM-DD`, `Last synced: YYYY-MM-DD` (giữ key, date format giữ ISO)
+- Tag: `REGRESSION`
+- Checkpoint letter: `A B C D E F`
+- Mode label: `Browser`, `Integration`, `Mixed`
+- Verdict label: `PASS`, `FAIL`
+- Field label trong report: `Story:`, `Mode:`, `Story status:`, `Previous status:`, `Verdict:`, `Manual test cases:`, `Passed:`, `Failed:`, `Bypassed:`, `Regression risk:`, `Docs synced:`, `Story updated:`, `Test cases edited:`, `Test cases added:`, `Indexes updated:`, `Checkpoints completed:`, `Details:` (giữ tiếng Anh để dev quen với format; nội dung sau dấu `:` viết tiếng Việt nếu là mô tả)
+- File ID, path, slash command, git command, branch name
+
+Ví dụ ghi `test-result-note` khi FAIL:
+```yaml
+test-result: FAIL
+test-result-note: "Bấm nút Xuất CSV không thấy file tải về; console hiển thị lỗi 500 từ /api/disputes/export."
+```
+
+---
+
 Run the manual test cases for a story against the real running system, record each result, sync the user story + test case file + indexes with the shipped code, and mark the story `DONE` only if every non-BYPASS case passes.
 
 This skill **only cares about manual tests** — the `TC-[id]-[name].md` file that `/create-test-case` produced. Code-level tests (Vitest unit tests, Playwright E2E specs) are written and maintained by the superpowers `test-driven-development` flow in Phase 3. This skill does not read, write, or run them.
