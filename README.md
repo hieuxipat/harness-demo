@@ -5,6 +5,13 @@ Boilerplate cài đặt quy trình phát triển hỗ trợ bởi AI vào một 
 ## Quick Reference
 
 ```bash
+# Bước 0 (chạy 1 lần): Khởi tạo workspace mới từ boilerplate
+/init-workspace
+# → Tạo folder workspace bên trong boilerplate
+# → Clone các subproject (backend, frontend, ...) vào workspace
+# → Generate CLAUDE.md workspace, init git, set remote
+# → Sau khi xong: cd <workspace-name>/ rồi chạy các skill bên dưới
+
 # Phase 1: Explore Story — xác minh feasibility, clarify, split nếu cần
 /explore-story <mô tả story hoặc Jira link>
 # → Gửi story cho PO, nhận câu trả lời, tự edit vào file
@@ -28,9 +35,91 @@ Boilerplate cài đặt quy trình phát triển hỗ trợ bởi AI vào một 
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/code) CLI đã được cài đặt
+- `git` ≥ 2.30 đã cài đặt (dùng ở `/init-workspace` để clone subprojects và init workspace)
 - Playwright đã được cài đặt (cần cho Phase 1 browser exploration và Phase 4 browser mode)
-- Project đang chạy ở local (frontend + backend)
+- Project đang chạy ở local (frontend + backend) — **sau khi** đã init workspace
 - Jira access đã cấu hình (tuỳ chọn, cho `/explore-story` link story)
+- Quyền access (HTTPS token hoặc SSH key) tới GitLab/GitHub của các repo subproject sẽ clone
+
+## Setup lần đầu: `/init-workspace`
+
+**Goal:** Biến boilerplate thành một workspace thật — folder chứa các subproject đã clone, CLAUDE.md mô tả workspace, git repo riêng, remote đã push. Skill này chỉ chạy **một lần** cho mỗi workspace mới.
+
+### Trước khi bắt đầu
+
+1. Clone boilerplate về máy:
+   ```bash
+   git clone <boilerplate-url> megamind-ai-boilerplate
+   cd megamind-ai-boilerplate
+   ```
+2. Mở Claude Code trong thư mục boilerplate (`claude` hoặc mở IDE có Claude Code extension).
+3. Chuẩn bị sẵn:
+   - Tên workspace (lowercase, dấu gạch ngang — vd `ordertracking-workspace`)
+   - Tên app hiển thị (vd `Order Tracking`)
+   - GitLab remote URL cho workspace *(tuỳ chọn — có thể thêm sau)*
+   - Danh sách subproject: `<folder-name> <git-url>` mỗi dòng (vd `backend https://gitlab.com/org/backend.git`)
+
+### Trigger
+
+```bash
+/init-workspace
+```
+
+Skill sẽ hỏi thông tin từng câu một, hiển thị summary để xác nhận, rồi thực hiện setup.
+
+### Skill sẽ làm gì
+
+1. **Tạo folder workspace** bên trong boilerplate: `<boilerplate>/<workspace-name>/`
+2. **Copy scaffold** từ boilerplate vào workspace: `.claude/`, `chrome-profile/`, `docs/`, `README.md`
+3. **Xoá skill `init-workspace`** khỏi workspace (chỉ dùng 1 lần, giữ ở boilerplate để init workspace khác)
+4. **Generate `.gitignore`** riêng cho workspace (ignore subproject folders, secrets, build output…)
+5. **Clone subprojects** (HTTPS-first, tự convert SSH→HTTPS; fallback SSH nếu HTTPS fail; timeout 60s/lần, không treo)
+6. **Phân tích tech stack** mỗi subproject (đọc `package.json`, `composer.json`, `go.mod`, `README.md`…) và kiểm tra subproject đã có `CLAUDE.md` chưa
+7. **Generate `CLAUDE.md` workspace** — bảng subprojects + stack + setup status, tổng quan từng project, mối tương quan giữa các project, copy nguyên "Workflow rules" từ boilerplate
+8. **Init git** trong workspace (branch `main`), add all, initial commit
+9. **Set remote và push** (nếu user cung cấp URL)
+10. **Thêm workspace folder vào `.gitignore`** của boilerplate để git của boilerplate không tracking workspace
+
+### Cấu trúc sau khi init
+
+```
+megamind-ai-boilerplate/        ← giữ nguyên, git repo không đổi
+  .claude/
+  docs/
+  CLAUDE.md
+  README.md
+  .gitignore                    ← thêm <workspace-name>/
+  <workspace-name>/             ← workspace MỚI, git repo riêng
+    .claude/                    ← skills (trừ init-workspace)
+    chrome-profile/
+    docs/
+      features/                 ← nơi đặt user story, test case, spec, plan
+    CLAUDE.md                   ← generated: mô tả app + subprojects
+    README.md
+    .gitignore
+    backend/                    ← subproject (git repo riêng của team)
+    frontend/                   ← subproject (git repo riêng của team)
+```
+
+### Sau khi init xong
+
+```bash
+cd <workspace-name>/
+# (tuỳ chọn) tạo resources.md chứa TASK_LIST_URL, LARK_NOTIFY_URL...
+# (tuỳ chọn) cd <subproject>/ && /init nếu subproject chưa có CLAUDE.md
+# Bắt đầu workflow:
+/explore-story <story hoặc Jira link>
+```
+
+### Xử lý sự cố
+
+| Tình huống | Cách xử lý |
+|---|---|
+| Clone subproject fail (chưa có VPN / không có quyền) | Skill log warning, tiếp tục các subproject khác. Fix xong chạy `git clone <url> <folder>` trong workspace |
+| Chưa có GitLab remote | Trả lời `skip` ở câu hỏi remote. Sau này chạy `git remote add origin <url> && git push -u origin main` |
+| Nhập nhầm → muốn sửa | Trả lời `n` ở bước confirm summary, skill sẽ hỏi lại câu cần sửa |
+| Subproject clone rồi nhưng chưa có `CLAUDE.md` | Vào `cd <subproject>/` chạy `/init` (built-in skill của Claude Code) |
+| Workspace name đã tồn tại | Skill hỏi chọn tên khác hoặc xác nhận ghi đè |
 
 ## Overview
 
