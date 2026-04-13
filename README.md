@@ -41,6 +41,23 @@ Boilerplate cài đặt quy trình phát triển hỗ trợ bởi AI vào một 
 - Jira access đã cấu hình (tuỳ chọn, cho `/explore-story` link story)
 - Quyền access (HTTPS token hoặc SSH key) tới GitLab/GitHub của các repo subproject sẽ clone
 
+## MCP servers & domain conventions
+
+Boilerplate đi kèm 2 file được `/init-workspace` copy sang mọi workspace mới:
+
+- **`.mcp.json`** — project-scoped MCP config. Hiện declare:
+  - `shopify-dev-mcp` (`@shopify/dev-mcp`) — search Shopify docs, validate Admin GraphQL, validate theme / component codeblocks. Dùng cho Phase 3 brainstorming + TDD và Phase 4 integration test. Lần đầu mở workspace, Claude Code sẽ prompt approve server này.
+  - Thêm MCP mới → edit `.mcp.json`, workspace mới tự kế thừa.
+- **`docs/shopify-conventions.md`** — checklist domain Shopify (viết bằng tiếng Anh để match với skill Superpowers và MCP docs):
+  - Division dùng **Polaris React** (`@shopify/polaris`), KHÔNG dùng Polaris Web Components (`<s-*>`).
+  - Backend: NestJS + TypeORM + MySQL; webhook phải HMAC verify + idempotent + GDPR mandatory topics.
+  - Admin GraphQL: luôn search + validate qua `shopify-dev-mcp` trước khi commit; spec ghi rõ API version + scopes.
+  - Decision-log template cho spec (Phase 3 brainstorming phải embed khi story đụng Shopify).
+  - Routing: Polaris React docs → `context7` MCP; Shopify platform docs → `shopify-dev-mcp`.
+- **`CLAUDE.md` workspace** — nếu `/init-workspace` detect subproject là Shopify app (`@shopify/polaris`, `@shopify/shopify-api`, `@shopify/app-bridge-react`, `@shopify/shopify-app-remix`), section "Shopify domain conventions" tự động được chèn vào CLAUDE.md workspace, trỏ Claude đọc `docs/shopify-conventions.md` ở các phase phù hợp.
+
+File `shopify-conventions.md` là **constraint checklist**, không phải workflow override. 4-phase workflow vẫn là luồng chính.
+
 ## Setup lần đầu: `/init-workspace`
 
 **Goal:** Biến boilerplate thành một workspace thật — folder chứa các subproject đã clone, CLAUDE.md mô tả workspace, git repo riêng, remote đã push. Skill này chỉ chạy **một lần** cho mỗi workspace mới.
@@ -70,7 +87,7 @@ Skill sẽ hỏi thông tin từng câu một, hiển thị summary để xác n
 ### Skill sẽ làm gì
 
 1. **Tạo folder workspace** bên trong boilerplate: `<boilerplate>/<workspace-name>/`
-2. **Copy scaffold** từ boilerplate vào workspace: `.claude/`, `chrome-profile/`, `docs/`, `README.md`
+2. **Copy scaffold** từ boilerplate vào workspace: `.claude/`, `chrome-profile/`, `docs/` (bao gồm `shopify-conventions.md`), `.mcp.json`, `README.md`
 3. **Xoá skill `init-workspace`** khỏi workspace (chỉ dùng 1 lần, giữ ở boilerplate để init workspace khác)
 4. **Generate `.gitignore`** riêng cho workspace (ignore subproject folders, secrets, build output…)
 5. **Clone subprojects** (HTTPS-first, tự convert SSH→HTTPS; fallback SSH nếu HTTPS fail; timeout 60s/lần, không treo)
@@ -85,16 +102,20 @@ Skill sẽ hỏi thông tin từng câu một, hiển thị summary để xác n
 ```
 megamind-ai-boilerplate/        ← giữ nguyên, git repo không đổi
   .claude/
+  .mcp.json                     ← project-scoped MCP config (shopify-dev-mcp)
   docs/
+    shopify-conventions.md      ← checklist domain Shopify (Polaris React, webhook, GraphQL)
   CLAUDE.md
   README.md
   .gitignore                    ← thêm <workspace-name>/
   <workspace-name>/             ← workspace MỚI, git repo riêng
     .claude/                    ← skills (trừ init-workspace)
+    .mcp.json                   ← copy từ boilerplate
     chrome-profile/
     docs/
       features/                 ← nơi đặt user story, test case, spec, plan
-    CLAUDE.md                   ← generated: mô tả app + subprojects
+      shopify-conventions.md    ← copy từ boilerplate
+    CLAUDE.md                   ← generated: mô tả app + subprojects (+ Shopify section nếu detect)
     README.md
     .gitignore
     backend/                    ← subproject (git repo riêng của team)

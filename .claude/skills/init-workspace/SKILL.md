@@ -164,6 +164,7 @@ cp -r "$BOILERPLATE_DIR/.claude" "$WORKSPACE_DIR/.claude"
 cp -r "$BOILERPLATE_DIR/chrome-profile" "$WORKSPACE_DIR/chrome-profile"
 cp -r "$BOILERPLATE_DIR/docs" "$WORKSPACE_DIR/docs"
 cp "$BOILERPLATE_DIR/README.md" "$WORKSPACE_DIR/README.md"
+cp "$BOILERPLATE_DIR/.mcp.json" "$WORKSPACE_DIR/.mcp.json"
 ```
 
 **KHÔNG copy:**
@@ -171,6 +172,8 @@ cp "$BOILERPLATE_DIR/README.md" "$WORKSPACE_DIR/README.md"
 - `.gitignore` (sẽ generate riêng)
 - `CLAUDE.md` (sẽ generate mới ở bước 3.6 sau khi biết kết quả clone)
 - Folder workspace khác nếu tồn tại
+
+**Lưu ý `.mcp.json`:** đây là project-scoped MCP config của Claude Code. Copy sang workspace để mọi dự án con dùng chung MCP servers (shopify-dev-mcp...). Lần đầu mở Claude Code trong workspace, user cần approve các MCP server này.
 
 #### 3.3 Xoá skill init-workspace khỏi workspace
 
@@ -281,6 +284,7 @@ Với mỗi subproject **clone thành công**, đọc metadata:
 
 1. **Tech stack detection** — đọc các file sau (nếu có):
    - `package.json` → name, description, dependencies (React, Next, Express, Vue, Nuxt, Shopify Polaris, Remix...)
+   - **Shopify app detection:** nếu package.json chứa BẤT KỲ dependency nào trong: `@shopify/polaris`, `@shopify/shopify-api`, `@shopify/app-bridge-react`, `@shopify/shopify-app-remix` → đánh dấu `is_shopify_app = true` cho subproject đó. Nếu workspace có ≥ 1 subproject Shopify app → thêm section "Shopify domain conventions" vào CLAUDE.md workspace (template ở cuối skill này).
    - `composer.json` → PHP / Laravel
    - `requirements.txt` / `pyproject.toml` → Python / Django / FastAPI
    - `go.mod` → Go
@@ -348,6 +352,18 @@ Workspace này gồm các dự án con, mỗi dự án có git repo riêng:
 - Commit trong workspace chỉ chứa thay đổi về scaffold (`.claude/`, `docs/`, config shared).
 - Commit trong subproject: `cd <subproject>/` rồi commit ở đó (có git repo riêng).
 - Không auto-commit.
+
+<!-- Nếu có subproject detect là Shopify app (package.json chứa @shopify/polaris, @shopify/shopify-api, hoặc @shopify/app-bridge-react), THÊM block sau: -->
+
+## Shopify domain conventions
+
+Workspace này có subproject Shopify app. Đọc `docs/shopify-conventions.md` trước khi:
+- Phase 1 `explore-story` trên story đụng UI/API Shopify
+- Phase 3 `sp-brainstorming` — spec phải theo decision-log template
+- Phase 3 TDD — UI dùng **Polaris React** (`@shopify/polaris`), KHÔNG dùng web components `<s-*>`
+- Phase 4 `/self-test` — browser mode chạy trong iframe Shopify Admin, webhook trigger qua Shopify CLI
+
+Validate Admin GraphQL qua `shopify-dev-mcp` MCP. Tra Polaris React docs qua `context7` MCP.
 
 <!-- Copy nguyên section "Workflow rules that override defaults" từ boilerplate CLAUDE.md -->
 ```

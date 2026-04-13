@@ -19,6 +19,27 @@ See `README.md` for the full workflow narrative (written in Vietnamese).
 
 Superpowers skills are installed locally at `.claude/skills/sp-*` (not as a plugin). Changes to enabled plugins should be made in `.claude/settings.json`.
 
+## Project-scoped MCP servers (`.mcp.json`)
+
+`.mcp.json` at the repo root declares MCP servers that Claude Code loads automatically when the workspace is opened. `/init-workspace` copies this file into each new workspace so every subproject shares the same MCP baseline.
+
+Currently configured:
+
+- `shopify-dev-mcp` — Shopify Dev MCP (`@shopify/dev-mcp`). Provides `learn_shopify_api`, `search_docs_chunks`, `validate_graphql_codeblocks`, `validate_theme`, `validate_component_codeblocks`. Use for Admin/Storefront API queries, Polaris components, and theme code — essential for brainstorming and TDD on any Shopify app subproject.
+
+When adding a new MCP server, edit `.mcp.json` and make sure `/init-workspace` still copies it to new workspaces. The first time a workspace opens, Claude Code prompts the user to approve each server.
+
+## Shopify domain conventions
+
+If a workspace contains a Shopify app subproject (detected via `@shopify/polaris`, `@shopify/shopify-api`, or `@shopify/app-bridge-react` in any subproject `package.json`), read `docs/shopify-conventions.md` before:
+
+- Phase 1 `explore-story` on a story that touches Shopify UI or API
+- Phase 3 `sp-brainstorming` — the spec must follow the decision-log template from that file
+- Phase 3 `sp-test-driven-development` — UI tests must use Polaris React components (not web components `<s-*>`), GraphQL code must be validated via `shopify-dev-mcp`
+- Phase 4 `/self-test` — browser mode runs inside Shopify Admin iframe, webhooks trigger via Shopify CLI
+
+The file is a constraint checklist, not a workflow override. The 4-phase workflow still owns the execution order.
+
 ## The four workflow phases
 
 | Phase | Command | Skill file | Purpose |
