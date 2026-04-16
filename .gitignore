@@ -1,6 +1,6 @@
 # Secrets & credentials
 resources.md
-
+.claude/settings.local.json
 # Browser session data
 chrome-profile/
 
@@ -35,4 +35,7 @@ build/
 # Environment
 .env
 .env.*
+
+# Workspace
+age-verification-workspace/
 
