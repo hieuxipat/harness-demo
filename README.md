@@ -1,490 +1,158 @@
-# AI-Assisted Development Workflow
+# AI-Assisted Development Workflow — Harness + CodeGraph
 
-Boilerplate cài đặt quy trình phát triển hỗ trợ bởi AI vào một dự án host. Từ story đến implementation đã được verify — 4 phase, mỗi phase dừng chờ human review.
+Boilerplate cài quy trình phát triển hỗ trợ bởi AI vào dự án host, ghép từ **`claude-code-harness`** (plugin — loop `plan → work → review → sync → release`, có gate, enforce bằng Go binary) và **`codegraph`** (index ngữ nghĩa code local, per-subproject). Boilerplate chỉ **cấu hình** 2 tool này cho workspace — không chứa source sản phẩm.
+
+> Trước đây boilerplate dùng workflow 4-phase tự viết (superpowers `sp-*`, `explore-story`, `create-test-case`, `self-test`...). Đã **thay hoàn toàn** bằng harness + codegraph. Chi tiết & lý do: `docs/harness-codegraph-migration-plan.md`.
 
 ## Quick Reference
 
 ```bash
-# Bước 0 (chạy 1 lần): Khởi tạo workspace mới từ boilerplate
+# Bước 0 — cài plugin harness (USER step, 1 lần/máy, cần restart Claude Code):
+/plugin marketplace add Chachamaru127/claude-code-harness
+/plugin install claude-code-harness@claude-code-harness-marketplace
+# → restart Claude Code
+
+# Bước 1 — khởi tạo workspace từ boilerplate (chạy trong thư mục boilerplate):
 /init-workspace
-# → Tạo folder workspace bên trong boilerplate
-# → Clone các subproject (backend, frontend, ...) vào workspace
-# → Generate CLAUDE.md workspace, init git, set remote
-# → Sau khi xong: cd <workspace-name>/ rồi chạy các skill bên dưới
+# → clone subprojects, codegraph init mỗi subproject, seed harness.toml + rules,
+#   ghi .mcp.json + CLAUDE.md, set .git/info/exclude. In hướng dẫn /harness-setup.
 
-# Phase 1: Explore Story — xác minh feasibility, clarify, split nếu cần
-/explore-story <mô tả story hoặc Jira link>
-# → Gửi story cho PO, nhận câu trả lời, tự edit vào file
-# → (Helper) Dùng /po-qa-loop để đi từng câu hỏi PO, auto edit vào file
-/po-qa-loop docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
+# Bước 2 — bật harness trong từng subproject (USER step, 1 lần/subproject):
+cd <workspace>/backend && /harness-setup     # rồi frontend/, storefront/...
 
-# Phase 2: Create Test Case — sinh test case từ story đã validate
-/create-test-case docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
+# Bước 3 — chạy loop harness, LUÔN ở trong subproject:
+cd <workspace>/backend
+/harness-plan        # → spec.md + Plans.md (user duyệt)
+/harness-work --no-commit   # → TDD slice (LUÔN --no-commit)
+/harness-review      # → review độc lập, block major
+/harness-sync        # → đồng bộ spec/Plans/code
+/harness-release     # → đóng gói evidence, preflight
 
-# Phase 3: Implement — brainstorm + plan + TDD, đọc cả US và TC làm input
-/sp-brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md \
-  and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md
-
-# Phase 4: Verify & Sync — test manual + sync docs
-/self-test
-
-# Commit khi sẵn sàng (không tự động commit ở bất kỳ phase nào)
-/ship-it
+# Commit khi sẵn sàng (KHÔNG auto-commit) — trong đúng subproject:
+git commit ...   # hoặc /ship-it
 ```
 
 ## Prerequisites
 
-- [Claude Code](https://claude.ai/code) CLI đã được cài đặt
-- `git` ≥ 2.30 đã cài đặt (dùng ở `/init-workspace` để clone subprojects và init workspace)
-- Playwright đã được cài đặt (cần cho Phase 1 browser exploration và Phase 4 browser mode)
-- Project đang chạy ở local (frontend + backend) — **sau khi** đã init workspace
-- Jira access đã cấu hình (tuỳ chọn, cho `/explore-story` link story)
-- Quyền access (HTTPS token hoặc SSH key) tới GitLab/GitHub của các repo subproject sẽ clone
+- [Claude Code](https://claude.ai/code) CLI (≥ 2.1.117 để dùng `extraKnownMarketplaces`/plugin ổn định).
+- `git` ≥ 2.30 (clone subprojects, set `.git/info/exclude`).
+- `node` + `npx` (codegraph chạy qua `npx @colbymchenry/codegraph`).
+- Playwright (`playwright-cli`) — verify UI thật trong Shopify Admin iframe.
+- Quyền access (HTTPS token / SSH key) tới repo các subproject.
+- Jira access (tuỳ chọn — plugin `atlassian` để plan từ Jira link).
 
-## MCP servers & domain conventions
+## Cài plugin harness (USER step — không tự động được)
 
-Boilerplate đi kèm 2 file được `/init-workspace` copy sang mọi workspace mới:
-
-- **`.mcp.json`** — project-scoped MCP config. Hiện declare:
-  - `shopify-dev-mcp` (`@shopify/dev-mcp`) — search Shopify docs, validate Admin GraphQL, validate theme / component codeblocks. Dùng cho Phase 3 brainstorming + TDD và Phase 4 integration test. Lần đầu mở workspace, Claude Code sẽ prompt approve server này.
-  - Thêm MCP mới → edit `.mcp.json`, workspace mới tự kế thừa.
-- **`docs/shopify-conventions.md`** — checklist domain Shopify (viết bằng tiếng Anh để match với skill Superpowers và MCP docs):
-  - Division dùng **Polaris React** (`@shopify/polaris`), KHÔNG dùng Polaris Web Components (`<s-*>`).
-  - Backend: NestJS + TypeORM + MySQL; webhook phải HMAC verify + idempotent + GDPR mandatory topics.
-  - Admin GraphQL: luôn search + validate qua `shopify-dev-mcp` trước khi commit; spec ghi rõ API version + scopes.
-  - Decision-log template cho spec (Phase 3 brainstorming phải embed khi story đụng Shopify).
-  - Routing: Polaris React docs → `context7` MCP; Shopify platform docs → `shopify-dev-mcp`.
-- **`CLAUDE.md` workspace** — nếu `/init-workspace` detect subproject là Shopify app (`@shopify/polaris`, `@shopify/shopify-api`, `@shopify/app-bridge-react`, `@shopify/shopify-app-remix`), section "Shopify domain conventions" tự động được chèn vào CLAUDE.md workspace, trỏ Claude đọc `docs/shopify-conventions.md` ở các phase phù hợp.
-
-File `shopify-conventions.md` là **constraint checklist**, không phải workflow override. 4-phase workflow vẫn là luồng chính.
-
-## Setup lần đầu: `/init-workspace`
-
-**Goal:** Biến boilerplate thành một workspace thật — folder chứa các subproject đã clone, CLAUDE.md mô tả workspace, git repo riêng, remote đã push. Skill này chỉ chạy **một lần** cho mỗi workspace mới.
-
-### Trước khi bắt đầu
-
-1. Clone boilerplate về máy:
-   ```bash
-   git clone <boilerplate-url> megamind-ai-boilerplate
-   cd megamind-ai-boilerplate
-   ```
-2. Mở Claude Code trong thư mục boilerplate (`claude` hoặc mở IDE có Claude Code extension).
-3. Chuẩn bị sẵn:
-   - Tên workspace (lowercase, dấu gạch ngang — vd `ordertracking-workspace`)
-   - Tên app hiển thị (vd `Order Tracking`)
-   - GitLab remote URL cho workspace *(tuỳ chọn — có thể thêm sau)*
-   - Danh sách subproject: `<folder-name> <git-url>` mỗi dòng (vd `backend https://gitlab.com/org/backend.git`)
-
-### Trigger
+Claude **không thể tự cài** marketplace plugin từ trong session. Bạn chạy thủ công 1 lần/máy:
 
 ```bash
-/init-workspace
+/plugin marketplace add Chachamaru127/claude-code-harness
+/plugin install claude-code-harness@claude-code-harness-marketplace
+# restart Claude Code, rồi trong mỗi subproject: /harness-setup
 ```
 
-Skill sẽ hỏi thông tin từng câu một, hiển thị summary để xác nhận, rồi thực hiện setup.
+`.claude/settings.json` của boilerplate đã khai báo `extraKnownMarketplaces` (pin ref **`v4.12.3`**, `autoUpdate: false`) + `enabledPlugins`. Khi mở Claude Code trong workspace và trust folder, Claude Code sẽ tự **prompt cài** plugin này cho cả team (cùng version).
 
-### Skill sẽ làm gì
+`bin/harness` là Go binary (đa nền tảng, ~11MB/nền). Đã verify chạy OK trên macOS arm64 (không bị Gatekeeper chặn). Hooks (`PreToolUse`/`PermissionRequest`) chạy tự động sau khi cài.
 
-1. **Tạo folder workspace** bên trong boilerplate: `<boilerplate>/<workspace-name>/`
-2. **Copy scaffold** từ boilerplate vào workspace: `.claude/`, `chrome-profile/`, `docs/` (bao gồm `shopify-conventions.md`), `.mcp.json`, `README.md`
-3. **Xoá skill `init-workspace`** khỏi workspace (chỉ dùng 1 lần, giữ ở boilerplate để init workspace khác)
-4. **Generate `.gitignore`** riêng cho workspace (ignore subproject folders, secrets, build output…)
-5. **Clone subprojects** (HTTPS-first, tự convert SSH→HTTPS; fallback SSH nếu HTTPS fail; timeout 60s/lần, không treo)
-6. **Phân tích tech stack** mỗi subproject (đọc `package.json`, `composer.json`, `go.mod`, `README.md`…) và kiểm tra subproject đã có `CLAUDE.md` chưa
-7. **Generate `CLAUDE.md` workspace** — bảng subprojects + stack + setup status, tổng quan từng project, mối tương quan giữa các project, copy nguyên "Workflow rules" từ boilerplate
-8. **Init git** trong workspace (branch `main`), add all, initial commit
-9. **Set remote và push** (nếu user cung cấp URL)
-10. **Thêm workspace folder vào `.gitignore`** của boilerplate để git của boilerplate không tracking workspace
+## Setup workspace: `/init-workspace`
+
+**Goal:** biến boilerplate thành workspace thật — folder chứa subprojects đã clone, mỗi subproject được wire sẵn harness + codegraph (overlay local), git boilerplate giữ nguyên. Chạy **một lần** cho mỗi workspace.
+
+### Chuẩn bị
+
+- Tên workspace (lowercase, gạch ngang — vd `ordertracking-workspace`)
+- Tên app hiển thị (vd `Order Tracking`)
+- GitLab remote URL cho workspace *(tuỳ chọn)*
+- Danh sách subproject: `<folder> <git-url>` mỗi dòng
+
+### `/init-workspace` làm gì (đã cập nhật cho harness + codegraph)
+
+1. Tạo `<boilerplate>/<workspace-name>/`, copy scaffold (`.claude/`, `chrome-profile/`, `docs/`, `.mcp.json`, `README.md`).
+2. Xoá skill `init-workspace` khỏi workspace (chỉ dùng 1 lần).
+3. Generate `.gitignore` workspace (ignore subproject folders, `.codegraph/`, `.claude/state/`, secrets).
+4. **Clone subprojects** (HTTPS-first, SSH fallback, timeout 60s/lần).
+5. Với **mỗi subproject clone thành công:**
+   - Thêm overlay harness/codegraph vào **`.git/info/exclude`** (không bẩn git team): `harness.toml`, `Plans.md`, `spec.md`, `.claude/state/`, `.codegraph/`, `evidence/`.
+   - `codegraph init` (+ index) → tạo `.codegraph/` riêng.
+   - Seed `harness.toml` (từ `templates/harness/`, điền tên subproject) + `.claude/rules/project-rules.md`.
+   - Thêm entry codegraph vào `.mcp.json`: `npx -y @colbymchenry/codegraph serve --mcp --path <subproject>`.
+6. Phân tích tech stack mỗi subproject; generate `CLAUDE.md` workspace (bảng subprojects + harness loop + Shopify section nếu detect).
+7. Init git workspace (branch `main`), commit, set remote + push (nếu có URL).
+8. Thêm `<workspace-name>/` vào `.gitignore` boilerplate.
 
 ### Cấu trúc sau khi init
 
 ```
-megamind-ai-boilerplate/        ← giữ nguyên, git repo không đổi
-  .claude/
-  .mcp.json                     ← project-scoped MCP config (shopify-dev-mcp)
-  docs/
-    shopify-conventions.md      ← checklist domain Shopify (Polaris React, webhook, GraphQL)
-  CLAUDE.md
-  README.md
-  .gitignore                    ← thêm <workspace-name>/
+megamind-ai-boilerplate/        ← giữ nguyên
+  .claude/  docs/  .mcp.json  templates/harness/  CLAUDE.md  README.md
   <workspace-name>/             ← workspace MỚI, git repo riêng
-    .claude/                    ← skills (trừ init-workspace)
-    .mcp.json                   ← copy từ boilerplate
-    chrome-profile/
-    docs/
-      features/                 ← nơi đặt user story, test case, spec, plan
-      shopify-conventions.md    ← copy từ boilerplate
-    CLAUDE.md                   ← generated: mô tả app + subprojects (+ Shopify section nếu detect)
-    README.md
-    .gitignore
-    backend/                    ← subproject (git repo riêng của team)
-    frontend/                   ← subproject (git repo riêng của team)
+    .claude/  docs/  chrome-profile/  .mcp.json  CLAUDE.md  README.md
+    backend/                    ← subproject (git team) + overlay LOCAL:
+      .git/info/exclude (+= harness/codegraph artifacts)
+      harness.toml  Plans.md  spec.md  .codegraph/  evidence/
+      .claude/rules/project-rules.md
+    frontend/  storefront/      ← tương tự
 ```
 
-### Sau khi init xong
+## Harness loop (per-subproject)
 
-```bash
-cd <workspace-name>/
-# (tuỳ chọn) tạo resources.md chứa TASK_LIST_URL, LARK_NOTIFY_URL...
-# (tuỳ chọn) cd <subproject>/ && /init nếu subproject chưa có CLAUDE.md
-# Bắt đầu workflow:
-/explore-story <story hoặc Jira link>
-```
+Harness lưu state **per git repo** → chạy verbs **trong từng subproject** (`cd backend/` rồi `/harness-*`).
 
-### Xử lý sự cố
-
-| Tình huống | Cách xử lý |
+| Verb | Làm gì |
 |---|---|
-| Clone subproject fail (chưa có VPN / không có quyền) | Skill log warning, tiếp tục các subproject khác. Fix xong chạy `git clone <url> <folder>` trong workspace |
-| Chưa có GitLab remote | Trả lời `skip` ở câu hỏi remote. Sau này chạy `git remote add origin <url> && git push -u origin main` |
-| Nhập nhầm → muốn sửa | Trả lời `n` ở bước confirm summary, skill sẽ hỏi lại câu cần sửa |
-| Subproject clone rồi nhưng chưa có `CLAUDE.md` | Vào `cd <subproject>/` chạy `/init` (built-in skill của Claude Code) |
-| Workspace name đã tồn tại | Skill hỏi chọn tên khác hoặc xác nhận ghi đè |
+| `/harness-plan` | Research → `spec.md` (product contract) + `Plans.md` (task ledger). User duyệt. |
+| `/harness-work --no-commit` | TDD slice theo task. **LUÔN `--no-commit`.** |
+| `/harness-review` | Review độc lập; block critical/major. |
+| `/harness-sync` | Đồng bộ `spec.md`/`Plans.md`/code cross-session. |
+| `/harness-release` | Đóng gói evidence, preflight. |
 
-## Overview
+Agents có sẵn của harness: `advisor`, `reviewer`, `scaffolder`, `worker`. Verify UI thật → `playwright-cli --headed` trong Shopify Admin iframe.
 
-```
-Story/Task
-    │
-    ▼
-PHASE 1: EXPLORE STORY (/explore-story)
-    Khám phá app (browser/docs/Jira/source)
-    → Xác minh feasibility (BLOCKED → HALT + proof, không ghi file)
-    → Split nếu quá lớn (Agile INVEST)
-    → Viết US-*.md + "Open questions for PO" ở cuối
-    → Human gửi PO, edit câu trả lời vào file
-    │
-    ▼
-PHASE 2: CREATE TEST CASE (/create-test-case)
-    Đọc story → Sinh TC-*.md (HAPPY / EDGE / ERROR)
-    → Human review test cases
-    │
-    ▼
-PHASE 3: IMPLEMENT (/sp-brainstorming + superpowers skills)
-    Đọc US-*.md + TC-*.md → Brainstorm → Design spec
-    → Implementation plan → TDD (test trước, code sau)
-    → Review checkpoints → KHÔNG auto-commit
-    │
-    ▼
-PHASE 4: VERIFY & SYNC (/self-test)
-    Chạy manual test cases trên hệ thống thực
-    → Sync docs với code đã ship
-    → Flip status DONE (chỉ khi all non-BYPASS pass)
-    │
-    ▼
-COMMIT (/ship-it hoặc manual git)
-```
+## Routing theo độ lớn task
 
-## Cấu trúc artifacts
-
-Mọi artifact của một story nằm gọn trong cùng một folder:
-
-```
-docs/features/
-  index.md                              ← top-level index
-  [group]/
-    index.md                            ← per-group index
-    US-[id]-[name]/                     ← folder cho story
-      US-[id]-[name].md                 ← user story (Phase 1)
-      TC-[id]-[name].md                 ← test cases (Phase 2)
-      specs/                            ← design docs (Phase 3 brainstorming)
-        [topic]-design.md
-      plans/                            ← implementation plans (Phase 3 writing-plans)
-        [feature-name].md
-```
-
-## Phase 1: Explore Story (`/explore-story`)
-
-**Goal:** Hiểu story, xác minh app có build được hay không, chia nhỏ nếu cần, để lại câu hỏi business-logic cho PO.
-
-**Trigger:** `/explore-story <mô tả story hoặc Jira link>`
-
-### Flow
-
-```
-1. Đọc & hiểu story/task
-2. Explore app: browser (tuỳ chọn) / docs / Jira / source có chủ đích
-3. Verify feasibility:
-   ├─ BLOCKED → HALT, show reason + proof, KHÔNG tạo file
-   └─ FEASIBLE → đi tiếp
-4. Split nếu quá to (Agile INVEST, không chia theo FE/BE)
-5. Viết story: docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
-6. Append "## Open questions for PO" ở CUỐI mỗi story
-7. Bàn giao → user gửi PO → edit câu trả lời vào file → Phase 2
-```
-
-### Rules
-
-- **BLOCKED = hard-stop.** Không tạo file, trả về proof (file path / route / screenshot / Jira comment) mà user tự verify được.
-- **Open questions chỉ về business logic** — rules, policies, state transitions, domain terms, scope. KHÔNG hỏi technical/framework/UX.
-- **Claude không block chat chờ PO** — ghi câu hỏi vào file rồi dừng.
-- **Refine mode:** Nếu PO trả lời mở rộng scope / đổi actor / thêm capability → chạy lại `/explore-story <path to US-*.md>`.
-
-### Your role
-
-1. Nếu BLOCKED → xử lý chỗ bị chặn, chạy lại
-2. Nếu có story → gửi PO, nhận câu trả lời, tự edit vào file (hoặc dùng `/po-qa-loop` bên dưới)
-3. Khi mọi blocking question đã resolve → chạy `/create-test-case`
-
-### Helper: `/po-qa-loop`
-
-**Goal:** Đi qua section `## Open questions for PO` từng câu một, ghi câu trả lời PO vào file, tự cập nhật acceptance criteria khi answer khác best guess, và flag khi answer mở rộng scope.
-
-**Trigger:**
-
-```bash
-/po-qa-loop docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
-# hoặc truyền folder group (xử lý theo dependency order từ index.md)
-/po-qa-loop docs/features/[group]/
-# hoặc không tham số → scan tất cả US-*.md còn question chưa resolve
-/po-qa-loop
-```
-
-### Flow
-
-1. Parse section `## Open questions for PO` (blocking trước, non-blocking sau)
-2. Với mỗi câu hỏi chưa trả lời → gửi 1 message/lần (question + why it matters + best guess)
-3. User reply:
-   - `ok` / `ok best guess` → accept best guess
-   - Paste câu trả lời PO → áp dụng case A/B/C
-   - `skip` → để lại, tiếp câu sau
-4. Ghi đĩa **sau mỗi câu trả lời** (crash-safe, resume được)
-5. Khi hết câu → rewrite section thành `None — ready for /create-test-case` (nếu đã resolve hết)
-
-### Rules
-
-- **Không tự guess answer** — reply ambiguous → hỏi lại
-- **1 question/message** — không gộp
-- **Không auto-run `/explore-story` hay `/create-test-case`** — chỉ flag và gợi ý
-- **Không delete content PO đã viết** — edit xung quanh, không overwrite
-- **Answer mở rộng scope → KHÔNG edit body** — chỉ ghi `answered:` với dấu ⚠ để user chạy refine mode
-
-## Phase 2: Create Test Case (`/create-test-case`)
-
-**Goal:** Sinh file test case thủ công từ story đã validate.
-
-**Trigger:** `/create-test-case docs/features/[group]/US-[id]-[name]/US-[id]-[name].md`
-
-### What happens
-
-1. Đọc story file (acceptance criteria, steps, actor, feasibility)
-2. Sinh test cases chia 3 section:
-   - **HAPPY** — luồng thành công
-   - **EDGE** — dữ liệu biên, concurrent, async
-   - **ERROR** — validation failure, unauthorized, system failure
-3. Ghi ra `TC-[id]-[name].md` cùng folder với story, tất cả case `PENDING`
-4. ID prefix: `-H01, -H02, …` (HAPPY), `-E01, …` (EDGE), `-R01, …` (ERROR)
-5. Cập nhật indexes
-6. **Dừng chờ human review**
-
-### Rules
-
-- Một story → một file TC
-- Không bịa behavior — nếu story thiếu info → dừng, yêu cầu `/explore-story` refine
-- Steps là hành động user ("Click **Export**"), không reference hàm/API
-- Nếu PO answers đã thay đổi scope vượt feasibility cũ → dừng, yêu cầu refine
-
-### Your role
-
-Review test cases, xác nhận bao phủ đủ, điều chỉnh nếu cần, rồi sang Phase 3.
-
-## Phase 3: Implement (superpowers skills — TDD)
-
-**Goal:** Build feature với Test-Driven Development, đọc cả user story và test cases làm đầu vào.
-
-**Trigger:**
-
-```bash
-/sp-brainstorming read @docs/features/[group]/US-[id]-[name]/US-[id]-[name].md \
-  and test cases @docs/features/[group]/US-[id]-[name]/TC-[id]-[name].md
-```
-
-### Luồng chi tiết
-
-Phase 3 sử dụng chuỗi superpowers skills, mỗi skill tự gọi skill tiếp theo:
-
-#### Step 1: Brainstorming (`sp-brainstorming`)
-
-**Input bắt buộc:** file `US-*.md` + file `TC-*.md` — cả hai đều phải có.
-
-- Đọc story: acceptance criteria, business rules, actors
-- Đọc test cases: extract tất cả TC IDs (H01, E01, R01...)
-- Explore source code liên quan đến story
-- Hỏi clarifying questions (1 câu/lần)
-- Đề xuất 2-3 approaches với trade-offs
-- Present design → user approve
-- **Viết spec** vào `docs/features/[group]/US-[id]-[name]/specs/[topic]-design.md`
-- **Spec self-review:** cross-check spec với MỌI TC ID từ file test case. Mọi HAPPY/EDGE/ERROR case đều phải được cover bởi design. Gap = fix trước khi tiếp.
-- User review spec → approve → tự gọi Step 2
-
-#### Step 2: Writing Plans (`sp-writing-plans`)
-
-**Input:** spec từ Step 1 (đã chắt lọc toàn bộ US + TC).
-
-- Tạo plan chi tiết (bite-sized tasks, TDD steps, exact file paths, exact code)
-- **Viết plan** vào `docs/features/[group]/US-[id]-[name]/plans/[feature-name].md`
-- Hỏi user chọn execution mode:
-  - **Option 1: Subagent-Driven** (recommended) — dispatch subagent cho mỗi task
-  - **Option 2: Inline Execution** — chạy trong session hiện tại
-
-#### Step 3: Execution
-
-**Nếu Option 1 — Subagent-Driven (`sp-subagent-driven-development`):**
-
-Với mỗi task trong plan:
-1. Dispatch implementer subagent → viết failing test → implement → verify → self-review
-2. Dispatch spec reviewer subagent → verify code khớp spec
-3. Dispatch code quality reviewer subagent → verify chất lượng
-4. Mark task complete → next task
-
-**Nếu Option 2 — Inline (`sp-executing-plans`):**
-
-Execute từng task inline với checkpoints cho user review.
-
-**Cả hai đều dùng `sp-test-driven-development`:**
-- Red: viết failing test
-- Green: implement tối thiểu để pass
-- Refactor: clean up
-- **KHÔNG commit** — user tự commit khi sẵn sàng
-
-#### Step 4: Finishing (`sp-finishing-a-development-branch`)
-
-- Verify tất cả tests pass
-- Hỏi user: merge / PR / keep / discard
-
-### Data flow — tại sao TDD không cần đọc lại TC-*.md
-
-```
-US-*.md + TC-*.md
-       ↓
-sp-brainstorming (đọc CẢ HAI, cross-check ALL TC IDs)
-       ↓
-specs/design.md (single source of truth — đã "tiêu hóa" US + TC)
-       ↓
-plans/plan.md (sinh từ spec — có exact tasks + exact tests)
-       ↓
-sp-test-driven-development (chạy từ plan — đủ thông tin)
-```
-
-Brainstorming là điểm nối giữa Phase 1+2 (US + TC) và Phase 3 (superpowers). Nếu brainstorming bỏ sót edge case từ TC → fix ở brainstorming, không cần sửa TDD.
-
-### Your role
-
-- Review design trước khi approve
-- Review plan trước khi execution bắt đầu
-- Theo dõi tiến độ tại checkpoints
-- Commit khi sẵn sàng (`/ship-it`)
-
-## Phase 4: Verify & Sync (`/self-test`)
-
-**Goal:** Chạy tất cả manual test cases từ Phase 2 trên hệ thống thực, sync docs, và flip story status.
-
-> **Scope:** Phase 4 chỉ lo manual tests (`TC-*.md`). Unit tests và E2E specs do superpowers TDD ở Phase 3 sở hữu.
-
-**Trigger:** `/self-test` sau khi implementation hoàn tất.
-
-### Hai chế độ (pick-per-story)
-
-- **Browser mode** — story có UI. Dùng Playwright mở headed browser tại localhost.
-- **Integration mode** — story backend-only. HTTP thật + DB/queue/log thật, không mock. **Không tự dọn dẹp** — environment bẩn → dừng, yêu cầu human reset.
-- **Mixed** — story vừa FE vừa BE: dùng cả hai.
-
-### Checkpoints (ordered, re-runnable)
-
-| Checkpoint | Mô tả |
-|---|---|
-| A | Chạy mọi manual test case (không dừng khi fail) |
-| B | Ghi kết quả (PASS/FAIL + note) xuống `TC-*.md` |
-| C | Sync story + TC với code đã ship. Nếu case bị sửa → chạy lại case đó |
-| D | Regression smoke trên adjacent stories |
-| E | Cập nhật indexes + cross-refs |
-| F | Flip status: all non-BYPASS pass → `DONE`, any FAIL → `DRAFT` |
-
-Crash ở checkpoint sau không phá checkpoint trước. Re-run resume từ checkpoint đầu tiên chưa hoàn tất.
-
-### Output
-
-```
-Self-Test + Sync Report
-─────────────────────────────────
-Story:               docs/features/[group]/US-[id]-[name]/US-[id]-[name].md
-Mode:                Browser | Integration | Mixed
-Story status:        DONE | DRAFT
-Previous status:     DRAFT | DONE
-Verdict:             PASS | FAIL
-
-Manual test cases:
-  Passed:            N
-  Failed:            N
-  Bypassed:          N
-
-Docs synced:
-  Story updated:     yes | no
-  Test cases edited: [list of TC IDs] | none
-  Test cases added:  N new cases
-  Indexes updated:   yes | no
-
-Checkpoints completed: A B C D E F
-
-Details:
-  TC-[id]-[name]-H01: PASS
-  TC-[id]-[name]-E01: PASS
-  TC-[id]-[name]-R01: FAIL — [symptom]
-```
-
-### Your role
-
-Review report. Nếu có failures → bạn quyết định: fix code, điều chỉnh test case, hay BYPASS. Chạy lại `/self-test` để sync và flip status.
-
-## Khi nào dùng workflow nào
-
-### Full Workflow (4 phases)
-
-Dùng cho: feature mới, multi-screen flow, business logic phức tạp.
-
-```
-/explore-story → /create-test-case → /sp-brainstorming (với US + TC) → /self-test
-```
-
-### Light Workflow (skip Phase 1, vẫn chạy 2 + 3 + 4)
-
-Dùng cho: bug fix đơn giản, copy/styling, config, refactor nhỏ khi story đã rõ.
-
-```
-/create-test-case → /sp-brainstorming (với US + TC) → /self-test
-```
-
-Phase 2 vẫn bắt buộc — `/self-test` cần `TC-*.md` để verify.
-
-### How to decide
-
-| Câu hỏi | Yes → Full | No → Light |
+| Loại | Tiêu chí | Đường đi |
 |---|---|---|
-| Đây là user-facing behavior mới? | Full | Light |
-| Thay đổi existing user flow? | Full | Light |
-| Có thể gây lỗi non-obvious? | Full | Light |
-| Chỉ thay đổi 1 file, scope hiển nhiên? | Light | Full |
+| **Trivial** | ≤ 2 file, không đổi product behavior/API/data/permissions/billing | Prompt thẳng, bỏ ceremony (hook vẫn chạy). |
+| **Nhỏ** | 1 task, behavior nhẹ | `/harness-work` Solo `--auto-mode --no-commit`. |
+| **Vừa** | 2-3 task độc lập | `/harness-plan` → `/harness-work --parallel --no-commit`. Gate plan. |
+| **Lớn** | 4+ task / đổi behavior lớn | Full loop plan→review→sync→release, `--no-commit`. |
 
-**Khi không chắc, dùng full workflow.**
+Auto-mode bật cho Trivial/Nhỏ, tắt cho Vừa/Lớn. Định nghĩa ngưỡng trong `.claude/rules/project-rules.md`.
 
-## Workflow Rules
+## Config sống ở đâu (KHÔNG có config.json / constitution.md)
 
-1. **Manual tests only.** Unit test + E2E thuộc superpowers Phase 3. Phase 1/2/4 không đụng.
-2. **Human review bắt buộc** giữa các phase.
-3. **Tests trước code** ở Phase 3 (TDD).
-4. **Phase 3 brainstorming bắt buộc đọc cả US + TC.** Spec self-review phải cross-check mọi TC ID.
-5. **Không auto-commit.** Không skill nào tự commit. User dùng `/ship-it` hoặc git manual.
-6. **Feasibility là hard-stop gate** ở Phase 1. BLOCKED = không tạo file.
-7. **Open questions ở cuối story file**, không ở chat. Business-logic only.
-8. **Split chỉ khi cần** (INVEST). Không chia theo FE/BE.
-9. **`/create-test-case` không bịa.** Thiếu info → dừng, route lại `/explore-story`.
-10. **TC IDs prefix theo section.** `-H01` HAPPY, `-E01` EDGE, `-R01` ERROR. Append-only.
-11. **`/self-test` chọn mode theo story.** Browser / Integration / Mixed. Không mock.
-12. **Integration mode không tự dọn dẹp.** Dirty env → dừng, human reset.
-13. **`/self-test` không halt khi fail.** Chạy hết, ghi từng case, rồi tính verdict.
-14. **Status 2-state: DRAFT | DONE.** Chỉ `/self-test` flip DONE. Regression → DRAFT.
-15. **`/self-test` sync docs cùng lần chạy.** Case bị sửa → chạy lại case đó.
-16. **`/self-test` detect default branch động.** Không hardcode master/main.
-17. **Failures được báo cáo, không tự fix.** Claude không sửa production code.
-18. **Mọi artifact nằm trong folder story.** Không có `docs/superpowers/` riêng.
+| Bề mặt | Ai đọc | Chứa gì |
+|---|---|---|
+| `harness.toml` (subproject root) | Go binary | permissions, sandbox denyRead, protectedBranchPush, tdd. Sửa xong: `bin/harness sync`. |
+| `.claude/rules/project-rules.md` | agent | domain rules: tiếng Việt, no-commit, task-sizing, codegraph-first, Shopify, bug intake. |
+| `CLAUDE.md` (subproject) | agent | guidance + trỏ tới rules. |
+| `spec.md` + `Plans.md` | harness verbs | contract source-of-truth. |
+
+Template seed ở `templates/harness/`.
+
+## MCP servers (`.mcp.json`)
+
+- `shopify-dev-mcp` — search Shopify docs, validate Admin GraphQL + Polaris component.
+- **codegraph per-subproject** (init-workspace thêm) — `serve --mcp --path <subproject>`. Query trước grep khi có `.codegraph/`. Tools: `codegraph_search/context/trace/callers/callees/impact/node/explore`.
+
+## Shopify conventions
+
+Subproject là Shopify app → đọc `docs/shopify-conventions.md` trước khi plan/work code đụng Shopify. Cứng: **Polaris React** (không `<s-*>`); validate GraphQL qua `shopify-dev-mcp`; app embedded trong Admin iframe; tra Polaris API qua `context7`.
+
+## Commit rules
+
+**Không auto-commit.** `/harness-work` mặc định auto-commit → luôn `--no-commit`. `harness.toml` để `git commit`/`git push` ở `ask`. User commit khi sẵn sàng, **trong đúng subproject**. Prefix: `feat:`/`fix:`/`chore:`...
+
+## Workflow rules (override defaults)
+
+1. Harness chạy **per-subproject** — `cd <subproject>` trước mọi `/harness-*`.
+2. **No auto-commit** — luôn `--no-commit`; user commit thủ công.
+3. `spec.md`/`Plans.md` là source-of-truth; không bịa data chưa quan sát.
+4. **codegraph query-first** khi có `.codegraph/`.
+5. **Output tiếng Việt** cho user (harness không có i18n VN).
+6. Task-sizing routing (rules) + selective auto-mode.
+7. **Bug UI Shopify**: repro `playwright-cli --headed` trong Admin iframe + lưu `evidence/` trước khi fix.
+8. **Không commit overlay harness/codegraph** vào git subproject — chỉ ở `.git/info/exclude`.
+9. Cài plugin + `/harness-setup` là **user step** — session không tự cài được.
+```

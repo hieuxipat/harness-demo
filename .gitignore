@@ -1,6 +1,7 @@
 # Secrets & credentials
 resources.md
 .claude/settings.local.json
+
 # Browser session data
 chrome-profile/
 
@@ -8,6 +9,11 @@ chrome-profile/
 backend/
 frontend/
 storefront/
+
+# Harness + codegraph artifacts (local, không commit vào boilerplate)
+.claude/state/
+.codegraph/
+state.db
 
 # Dependencies
 node_modules/
@@ -36,6 +42,6 @@ build/
 .env
 .env.*
 
-# Workspace
-age-verification-workspace/
-
+# Workspaces (init-workspace tạo bên trong boilerplate, mỗi cái có git riêng)
+# init-workspace tự append <workspace-name>/ vào đây khi tạo workspace mới.
+ordertracking-workspace-harness/

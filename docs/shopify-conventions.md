@@ -1,8 +1,8 @@
 # Shopify Domain Conventions
 
-Short reference for Superpowers skills (especially `sp-brainstorming`, `sp-writing-plans`, `sp-test-driven-development`, `self-test`) to generate code that fits this Division's Shopify app stack. **Read this file when a workspace contains a Shopify app subproject** (detected via `@shopify/polaris`, `@shopify/shopify-api`, or `@shopify/app-bridge-react` in any `package.json`).
+Detailed reference cho workflow harness (đặc biệt `/harness-plan`, `/harness-work`, `/harness-review`) để sinh code khớp stack Shopify app của Division. **Đọc file này khi subproject là Shopify app** (detect qua `@shopify/polaris`, `@shopify/shopify-api`, hoặc `@shopify/app-bridge-react` trong `package.json`).
 
-This is not a workflow override — it is a domain constraint checklist. If generated code violates any item below, treat it as a bug and fix during Phase 3 before moving to Phase 4.
+File này là **constraint checklist domain**, được trỏ tới từ `.claude/rules/project-rules.md`. Nếu code sinh ra vi phạm bất kỳ mục nào dưới đây, coi như bug và fix trong `/harness-work` (trước review). Không phải workflow override — execution order vẫn do harness loop sở hữu.
 
 ## Stack reference (Division standard)
 
@@ -77,28 +77,31 @@ Every webhook controller in NestJS must:
 - The Admin GraphQL API bills **calculated query cost**, not request count. Split heavy queries and use `bulk operations` for large datasets.
 - Handle `THROTTLED` responses with exponential backoff.
 
-## Phase-specific notes
+## Verb-specific notes (harness loop)
 
-### Phase 1 (`explore-story`)
+### `/harness-plan` (spec.md + Plans.md)
 
-- When a story touches UI, record an open question to the PO if the story does not specify which Polaris components are expected.
-- When a story touches the Admin API, list the required scopes and the target API version before drafting acceptance criteria.
+- `spec.md` phải ghi: (a) Polaris React components dự kiến, (b) Admin API operations + version, (c) webhook topics (nếu có), (d) thay đổi TypeORM entity + migration plan, (e) scopes yêu cầu.
+- Story đụng UI nhưng chưa rõ Polaris component nào → ghi open question, hỏi user (đừng đoán).
+- Story đụng Admin API → list scopes + target API version trước khi chốt acceptance criteria.
 
-### Phase 3 (`sp-brainstorming` + TDD)
+### `/harness-work` (TDD slice)
 
-- The spec must document: (a) the Polaris React components planned, (b) Admin API operations + version, (c) webhook topics (if any), (d) TypeORM entity changes + migration plan.
-- Unit tests for webhook controllers: mock the HMAC verify service and cover both valid and invalid HMAC cases.
-- Tests for GraphQL calls: mock the Shopify client. Do NOT hit the real API from unit tests.
+- UI dùng **Polaris React** (`@shopify/polaris`), KHÔNG `<s-*>`. Validate component qua `context7` (`@shopify/polaris`).
+- GraphQL: validate qua `mcp__shopify-dev-mcp__validate_graphql_codeblocks` trước khi commit. Đừng đoán field name.
+- Unit test webhook controller: mock HMAC verify service, cover cả valid + invalid HMAC.
+- Test GraphQL: mock Shopify client. KHÔNG gọi API thật từ unit test.
 
-### Phase 4 (`/self-test`)
+### Verify UI thật (playwright headed, thay self-test browser mode cũ)
 
-- **Browser mode:** the app must be opened inside the Shopify Admin iframe (App Bridge needs the admin context). Do NOT open `localhost:3000` directly — use the `shopify app dev` tunnel URL.
-- **Integration mode — webhooks:** trigger via Shopify CLI (`shopify app webhook trigger`) instead of faking a curl call.
-- **Integration mode — Admin API:** follow the `shopify-admin-execution` pattern — run CLI commands against a real dev store rather than a mock.
+- App phải mở **trong Shopify Admin iframe** (App Bridge cần admin context). KHÔNG mở `localhost:3000` trực tiếp — dùng tunnel URL của `shopify app dev`.
+- Webhook: trigger qua Shopify CLI (`shopify app webhook trigger`), không fake curl.
+- Admin API integration: chạy CLI thật trên dev store, không mock.
+- **Bug UI Shopify:** repro bằng `playwright-cli --headed` trong Admin iframe + lưu screenshot `evidence/` TRƯỚC khi fix.
 
-## Decision-log template (embed in `specs/<topic>-design.md`)
+## Decision-log template (embed trong `spec.md`)
 
-When the story touches Shopify, include this block in the spec:
+Khi feature đụng Shopify, include block này trong `spec.md`:
 
 ```markdown
 ## Shopify integration decisions
