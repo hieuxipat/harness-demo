@@ -45,3 +45,6 @@ build/
 # Workspaces (init-workspace tạo bên trong boilerplate, mỗi cái có git riêng)
 # init-workspace tự append <workspace-name>/ vào đây khi tạo workspace mới.
 ordertracking-workspace-harness/
+
+# Lessons (local only, không push lên github)
+docs/lessions/
