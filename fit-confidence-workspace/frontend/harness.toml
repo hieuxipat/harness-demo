@@ -1,0 +1,101 @@
+# Harness v4 config (per-subproject) — SEED do /init-workspace copy vào <subproject>/harness.toml
+# Sau khi sửa file này, chạy: bin/harness sync  (regenerate .claude-plugin/ của workspace).
+# Binary harness đọc file này ở projectRoot làm guardrail (permissions / sandbox / protected-branch / tdd).
+# Lưu ý: file này là overlay LOCAL — đã được thêm vào .git/info/exclude, KHÔNG commit vào repo team.
+
+[project]
+# /init-workspace điền name = tên subproject. version để 0.1.0 (metadata, không ảnh hưởng guardrail).
+name = "frontend"
+version = "0.1.0"
+
+[env]
+CLAUDE_CODE_SUBPROCESS_ENV_SCRUB = "1"
+
+[safety.permissions]
+# Push thẳng lên main/master: "ask" = hỏi trước (hợp no-auto-commit). "deny" nếu muốn chặn hẳn.
+protectedBranchPush = "ask"
+allow = [
+  "Bash(git status:*)",
+  "Bash(git diff:*)",
+  "Bash(git log:*)",
+  "Bash(git branch:*)",
+  "Bash(git show:*)",
+  "Bash(rg:*)",
+  "Bash(npm test:*)",
+  "Bash(npm run test:*)",
+  "Bash(npm run lint:*)",
+  "Bash(npm run build:*)",
+  "Bash(pnpm test:*)",
+  "Bash(pnpm run test:*)",
+  "Bash(pnpm run lint:*)",
+  "Bash(pnpm run build:*)",
+  "Bash(yarn test:*)",
+  "Bash(yarn run test:*)",
+  "Bash(yarn run lint:*)",
+  "Bash(yarn run build:*)",
+]
+deny = [
+  "Bash(sudo:*)",
+  "Bash(rm -rf:*)",
+  "Bash(rm -fr:*)",
+  "Bash(psql:*)",
+  "Bash(mysql:*)",
+  "Bash(mongod:*)",
+  "Bash(mongo:*)",
+  "Read(./.env)",
+  "Read(./.env.*)",
+  "Read(./secrets/**)",
+  "Read(**/*.pem)",
+  "Read(**/*.key)",
+  "Read(**/*id_rsa*)",
+  "Read(**/*id_ed25519*)",
+  "Read(**/.aws/**)",
+  "Read(**/.ssh/**)",
+  "Read(**/.npmrc)",
+]
+ask = [
+  # No-auto-commit: commit/push qua agent đều hỏi user trước. User commit thủ công ở terminal không bị chặn.
+  "Bash(git commit:*)",
+  "Bash(git push:*)",
+  "Bash(rm -r:*)",
+  "Bash(git reset --hard:*)",
+  "Bash(git push -f:*)",
+  "Bash(git push --force:*)",
+  "Bash(git clean -f:*)",
+  "Bash(git rebase:*)",
+  "Bash(git merge:*)",
+  "Bash(npm install:*)",
+  "Bash(npx:*)",
+  "Bash(pnpm install:*)",
+  "Bash(yarn install:*)",
+]
+
+[safety.sandbox]
+failIfUnavailable = true
+
+[safety.sandbox.filesystem]
+denyRead = [
+  ".env",
+  ".env.*",
+  "!.env.example",
+  "secrets/**",
+  "**/*.pem",
+  "**/*.key",
+  "**/*id_rsa*",
+  "**/*id_ed25519*",
+  "**/.aws/**",
+  "**/.ssh/**",
+]
+allowRead = [
+  ".env.example",
+  ".env.sample",
+  "docs/**",
+]
+
+[tdd]
+adopt_todo_list_first = true
+
+[tdd.enforce]
+# Mặc định off (an toàn). Nâng "central"/"max" nếu muốn ép TDD red-evidence chặt hơn.
+enabled = false
+level = "off"

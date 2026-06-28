@@ -10,6 +10,12 @@ backend/
 frontend/
 storefront/
 
+# Monorepo override: fit-confidence-workspace gộp code subproject vào repo này
+# (user decision) — re-include để commit, KHÔNG ignore như pattern trên.
+!fit-confidence-workspace/backend/
+!fit-confidence-workspace/frontend/
+!fit-confidence-workspace/storefront/
+
 # Harness + codegraph artifacts (local, không commit vào boilerplate)
 .claude/state/
 .codegraph/

@@ -1,0 +1,42 @@
+# Secrets & credentials
+resources.md
+.claude/settings.local.json
+
+# Browser session data
+chrome-profile/
+
+# Monorepo note: subproject folders (frontend/, backend/, storefront/) ARE tracked
+# (code committed into the boilerplate repo per user decision). Do NOT ignore them.
+
+# Harness + codegraph artifacts (local overlay, không commit)
+.claude/state/
+.codegraph/
+state.db
+evidence/
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build output
+dist/
+build/
+.cache/
+
+# Environment
+.env
+.env.*
