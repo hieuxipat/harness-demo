@@ -1,80 +1,86 @@
-# CLAUDE.md
+# CLAUDE.md — Fit Confidence
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Workspace for **Fit Confidence**. Guidance for Claude Code khi làm việc qua các subproject trong workspace này.
 
-## What this repo is
+## Workflow: harness + codegraph (per-subproject)
 
-This is **not a product codebase** — it is a **boilerplate** that installs an AI-assisted development workflow into host projects. The workflow is built from two third-party tools wired together:
+Workspace dùng workflow **claude-code-harness (plugin) + codegraph**, chạy **PER-SUBPROJECT**. Trước mọi verb harness phải `cd <subproject>`.
 
-1. **`claude-code-harness`** (plugin, pinned `v4.12.3`) — a discipline loop `plan → work → review → sync → release`. `spec.md`/`Plans.md` are the source-of-truth contracts; work happens in small gated slices. Enforcement (permissions, sandbox, protected-branch, TDD) is a Go binary (`bin/harness`) + hooks that Claude Code runs automatically once the plugin is installed.
-2. **`codegraph`** — a local semantic code index per subproject, so agents read-and-understand code with fewer tokens/tool-calls.
+**Cài 1 lần (USER step, cần restart Claude Code):**
+```
+/plugin marketplace add Chachamaru127/claude-code-harness
+/plugin install claude-code-harness@claude-code-harness-marketplace
+cd <subproject> && /harness-setup
+```
 
-The boilerplate's job is to **configure** these tools for the host project — it does not contain the product source. `/init-workspace` clones the host's subprojects into a workspace and wires everything up.
+**Loop trong từng subproject:**
+- `/harness-plan` → spec.md + Plans.md (user duyệt)
+- `/harness-work --no-commit` → TDD slice (LUÔN `--no-commit`)
+- `/harness-review` → review độc lập, block major
+- `/harness-sync` → đồng bộ spec/Plans/code
+- `/harness-release` → đóng gói evidence, preflight
 
-> Migration context: this boilerplate previously shipped a custom 4-phase superpowers workflow (`sp-*`, `explore-story`, `create-test-case`, `self-test`, ...). That has been **fully replaced** by harness + codegraph. See `docs/harness-codegraph-migration-plan.md` for the rationale and the spike findings that shaped this design.
+Domain rules per-subproject ở `.claude/rules/project-rules.md` (tiếng Việt, no-commit, task-sizing, codegraph-first, Shopify). codegraph query-first khi subproject có `.codegraph/`.
 
-## Enabled plugins (`.claude/settings.json`)
+## ⚠️ Monorepo layout (khác mặc định boilerplate)
 
-- `claude-code-harness@claude-code-harness-marketplace` — the workflow engine. Declared via `extraKnownMarketplaces` (github `Chachamaru127/claude-code-harness`, **pinned to ref `v4.12.3`**, `autoUpdate: false`) so the whole team installs the same version. When a teammate trusts the workspace folder, Claude Code prompts them to install it.
-- `atlassian@claude-plugins-official` — fetch Jira stories when planning from a Jira link.
-- `context7@claude-plugins-official` — current library/framework docs (incl. Polaris React API).
+Workspace này được cấu hình theo quyết định của user là **MONOREPO, flatten ra root**: code subproject (`frontend/`, `backend/`, `storefront/`) nằm ngay ở **root** của repo `harness-demo`, push lên `https://github.com/hieuxipat/harness-demo`. Scaffold boilerplate (templates/, skill init-workspace, CLAUDE/README boilerplate) đã được gỡ bỏ. Khác với mặc định (mỗi subproject là git repo riêng, overlay local-only qua `.git/info/exclude`):
 
-Installing the harness is a **user step** (cannot be done from inside a Claude session): `/plugin marketplace add Chachamaru127/claude-code-harness` → `/plugin install claude-code-harness@claude-code-harness-marketplace` → restart → `/harness-setup` (per subproject).
+- Subproject **không có `.git` riêng** — đã xoá khi clone để gộp monorepo.
+- Harness/codegraph artifacts không dùng `.git/info/exclude`; thay vào đó ignore qua `.gitignore` ở root repo: `.codegraph/`, `.claude/state/`, `state.db`, `evidence/`.
+- `harness.toml` / `spec.md` / `Plans.md` / `project-rules.md` **được commit** (file contract hữu ích, đây là repo của chính team).
+- Vì vậy **Workflow rule #1 và #9 bên dưới (per-subproject git repo, `.git/info/exclude`) không áp dụng** cho workspace này — harness state vẫn keep per-subproject folder, nhưng tất cả nằm trong một git repo.
 
-## The harness loop (per-subproject)
+## Subprojects
 
-Harness keeps state **per git repo** (`harness.toml`, `Plans.md`, `spec.md`, `.claude/state/` at `projectRoot`). Each subproject in a workspace is its own git repo, so **harness runs per-subproject** — you `cd backend/` (or `frontend/`, `storefront/`) and run the verbs there.
+Workspace này gồm 3 subproject (đều thuộc Shopify app). Harness/codegraph đã được wire sẵn:
 
-| Verb | Purpose |
-|---|---|
-| `/harness-plan` | Research → write `spec.md` (product contract) + `Plans.md` (task ledger). User approves. |
-| `/harness-work [--no-commit]` | TDD slice per task. Always pass `--no-commit` (see Commit rules). |
-| `/harness-review` | Independent review; blocks on critical/major findings. |
-| `/harness-sync` | Reconcile `spec.md`/`Plans.md`/code across sessions. |
-| `/harness-release` | Package evidence, run preflight. |
+| Folder | Repo (nguồn) | Branch | Stack | Harness wiring |
+|--------|------|--------|-------|----------------|
+| `frontend/` | gitlab.xipat.com/megaminds/megamind-ordertracking-boilerplate-frontend | `reactjs_boilerplate` | React 18 + Vite + Shopify Polaris 12 + App Bridge React | ✅ codegraph (197 nodes) + harness.toml + rules |
+| `backend/` | gitlab.xipat.com/megaminds/megamind-boilerplate-nestjs-react (bỏ `storefront/`) | `nestjs-boilerplate` | NestJS 11 + TypeORM + @shopify/shopify-api | ✅ codegraph (1,122 nodes) + harness.toml + rules |
+| `storefront/` | cùng repo nestjs-react, chỉ folder `storefront/` | `nestjs-boilerplate` | React 19 + Vite 6 (storefront widget) | ✅ codegraph (114 nodes) + harness.toml + rules |
 
-Harness ships agents (`advisor`, `reviewer`, `scaffolder`, `worker`) — no custom review agent needed. The plugin bundles ~37 skills total (it is `strict`, so individual skills can't be pruned); only the verbs above are used. Skill bodies are written in Japanese with English descriptions — Claude reads them fine; **all output to the user must be Vietnamese** (see rules).
+> `backend/` và `storefront/` tách ra từ **cùng một repo** `megamind-boilerplate-nestjs-react`: `backend/` = toàn bộ repo trừ folder `storefront/`; `storefront/` = chính folder đó.
 
-After the host UI is touched, verify the real system with **`playwright-cli`** (`--headed --profile=chrome-profile`) inside the Shopify Admin iframe.
+### Tổng quan từng subproject
 
-## Where configuration actually lives (v4.12.3 reality)
+#### `frontend/` — Shopify embedded Admin app UI (`ot_boilerplate`)
+React SPA chạy nhúng trong **Shopify Admin iframe** (App Bridge). UI dùng **Polaris React** + polaris-viz cho chart, react-redux cho state, react-router-dom cho routing.
+- Tech stack: React 18, Vite 4, `@shopify/polaris@12`, `@shopify/app-bridge-react@3`, `@shopify/polaris-viz`, `@shopify/react-form`, axios.
+- Entry points: `npm run dev` (Vite dev server), `npm run build`, `npm run lint`.
 
-There is **no** `claude-code-harness.config.json` and **no** `docs/constitution.md` — those keys exist in a legacy schema but nothing in v4.12.3 reads them. The real customization surfaces, all **per-subproject**:
+#### `backend/` — NestJS API backend (`boilerplate`)
+Backend NestJS cho Shopify app: auth/OAuth Shopify, gọi Admin & Storefront GraphQL, job queue (Bull), TypeORM migrations, Swagger docs.
+- Tech stack: NestJS 11, TypeORM, `@shopify/shopify-api@11`, `@shopify/admin-api-client`, `@shopify/storefront-api-client`, Bull, Passport/JWT, Throttler, Terminus.
+- Entry points: `npm run start:dev`, `npm run shopify:dev`, `npm run migration:generate` / `migration:run`.
 
-| Surface | Read by | Holds |
-|---|---|---|
-| `harness.toml` (subproject root) | Go binary (`bin/harness`) | permissions allow/deny/ask, sandbox `denyRead`, `protectedBranchPush`, `tdd.enforce`. Edit → run `bin/harness sync`. |
-| `.claude/rules/project-rules.md` (subproject) | agent context (via `/harness-setup localize`) | **all domain rules:** Vietnamese output, no-auto-commit, task-sizing, codegraph-first, Shopify, bug intake. |
-| `CLAUDE.md` (subproject) | agent | per-subproject guidance + pointer to rules. |
-| `spec.md` + `Plans.md` (subproject root) | harness verbs | the contracts (source of truth). |
+#### `storefront/` — Shopify storefront widget (`storefront`)
+Phần chạy ngoài **storefront** của khách (theme app extension / widget). Minimal React 19 + Vite 6, build ra asset nhúng vào theme.
+- Tech stack: React 19, Vite 6.
+- Entry points: `npm run dev`, `npm run build`, `npm run build:types`.
 
-Seed templates live in **`templates/harness/`** (`harness.toml`, `project-rules.md`); `/init-workspace` copies them into each subproject.
+### Mối tương quan giữa các subprojects
 
-## Project-scoped MCP servers (`.mcp.json`)
+- `backend/` cung cấp API (Admin GraphQL proxy, business logic) cho cả `frontend/` (Admin app) và `storefront/` (widget). Cấu hình qua `.env` (xem `backend/.env.sample`).
+- `frontend/` embedded trong Shopify Admin iframe, giao tiếp backend qua App Bridge + axios.
+- `storefront/` render trên storefront của merchant, lấy data qua API của `backend/`.
+- Trong monorepo này cả ba deploy độc lập nhưng share một git history.
 
-- `shopify-dev-mcp` (`@shopify/dev-mcp`) — `learn_shopify_api`, `search_docs_chunks`, `validate_graphql_codeblocks`, `validate_component_codeblocks`, `validate_theme`. Essential for any Shopify subproject.
-- **codegraph (per-subproject)** — added by `/init-workspace`, one entry per cloned subproject: `npx -y @colbymchenry/codegraph serve --mcp --path <subproject>`. The `--path` flag scopes each MCP server to one subproject's `.codegraph/` DB. Tools: `codegraph_search/context/trace/callers/callees/impact/node/explore`. Query codegraph **before** grep when `.codegraph/` exists.
+> **Lưu ý:** Phân tích ban đầu từ metadata (package.json/README). Xác nhận/cập nhật khi làm việc thực tế với code.
 
-`/init-workspace` copies `.mcp.json` into each new workspace. First open prompts the user to approve each server.
+## Commit rules cho workspace
 
-## Per-subproject overlay — never dirty the team's repo
-
-Subprojects are other teams' git repos. Harness/codegraph artifacts (`harness.toml`, `Plans.md`, `spec.md`, `.claude/state/`, `.codegraph/`, `evidence/`) live at the subproject root but are **local-only**: `/init-workspace` adds them to each subproject's **`.git/info/exclude`** (per-clone, never committed, doesn't touch the team's tracked `.gitignore`). The subproject's `git status` stays clean.
+- **Monorepo:** code subproject commit chung vào repo `harness-demo` (origin: github.com/hieuxipat/harness-demo). Không có git riêng per-subproject.
+- **No auto-commit:** luôn `/harness-work --no-commit`; user commit khi sẵn sàng.
+- Commit style: prefix ngắn lowercase (`feat:`, `fix:`, `chore:`...).
 
 ## Shopify domain conventions
 
-If a subproject is a Shopify app (detected via `@shopify/polaris`, `@shopify/shopify-api`, or `@shopify/app-bridge-react` in `package.json`), `.claude/rules/project-rules.md` points to **`docs/shopify-conventions.md`** — read it before `/harness-plan` and `/harness-work` on anything touching Shopify UI/API. Key constraints: **Polaris React** (`@shopify/polaris`, not web components `<s-*>`); validate Admin GraphQL via `shopify-dev-mcp`; app runs embedded in the Admin iframe.
-
-## Commit rules
-
-**No auto-commit.** Harness's `/harness-work` auto-commits by default — always pass **`--no-commit`**. `harness.toml` also puts `git commit`/`git push` under `ask`. The user commits when ready (manual `git` or `/ship-it`), inside the correct subproject. Commit style: short lowercase prefixes (`feat:`, `fix:`, `chore:`, ...).
-
-## Custom skills kept
-
-Only two local skills remain (everything else is provided by the harness plugin):
-
-- **`init-workspace`** — create a workspace, clone subprojects, set `.git/info/exclude`, `codegraph init` per subproject, seed `harness.toml` + `project-rules.md`, write `.mcp.json` + workspace `CLAUDE.md`, print `/harness-setup` next-steps. Boilerplate git is left untouched.
-- **`playwright-cli`** — headed browser (`--headed --profile=chrome-profile --browser=chrome`) for verifying real UI inside the Shopify Admin iframe.
+Workspace có subproject Shopify app (`frontend/` Polaris + App Bridge; `backend/` `@shopify/shopify-api`). Đọc `docs/shopify-conventions.md` trước khi `/harness-plan` hoặc `/harness-work` code đụng Shopify:
+- UI dùng **Polaris React** (`@shopify/polaris`), KHÔNG web components `<s-*>`.
+- Validate Admin GraphQL qua `shopify-dev-mcp`; tra Polaris API qua `context7`.
+- App embedded trong Shopify Admin iframe. Bug UI → repro `playwright-cli --headed` trong Admin iframe + lưu `evidence/`.
 
 ## Workflow rules that override defaults
 
@@ -88,3 +94,5 @@ Only two local skills remain (everything else is provided by the harness plugin)
 8. **Shopify UI bugs must be reproduced** with `playwright-cli --headed` in the Admin iframe + evidence saved to `evidence/` before fixing.
 9. **Never commit harness/codegraph overlay files** into a subproject's tracked git — they belong only in `.git/info/exclude`.
 10. **Installing the harness plugin + `/harness-setup` are user steps** — a Claude session cannot install marketplace plugins.
+
+> **Monorepo override (workspace này):** rule #1 và #9 áp dụng theo biến thể monorepo — KHÔNG có git per-subproject, KHÔNG dùng `.git/info/exclude`; harness state giữ per-subproject folder nhưng commit chung vào repo `harness-demo`. `.codegraph/` / `.claude/state/` / `state.db` / `evidence/` được ignore qua `.gitignore`. Các rule còn lại giữ nguyên.

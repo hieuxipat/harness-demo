@@ -5,21 +5,14 @@ resources.md
 # Browser session data
 chrome-profile/
 
-# Subprojects (có git repo riêng)
-backend/
-frontend/
-storefront/
+# Monorepo note: subproject folders (frontend/, backend/, storefront/) ARE tracked
+# (code committed into the boilerplate repo per user decision). Do NOT ignore them.
 
-# Monorepo override: fit-confidence-workspace gộp code subproject vào repo này
-# (user decision) — re-include để commit, KHÔNG ignore như pattern trên.
-!fit-confidence-workspace/backend/
-!fit-confidence-workspace/frontend/
-!fit-confidence-workspace/storefront/
-
-# Harness + codegraph artifacts (local, không commit vào boilerplate)
+# Harness + codegraph artifacts (local overlay, không commit)
 .claude/state/
 .codegraph/
 state.db
+evidence/
 
 # Dependencies
 node_modules/
@@ -47,10 +40,3 @@ build/
 # Environment
 .env
 .env.*
-
-# Workspaces (init-workspace tạo bên trong boilerplate, mỗi cái có git riêng)
-# init-workspace tự append <workspace-name>/ vào đây khi tạo workspace mới.
-ordertracking-workspace-harness/
-
-# Lessons (local only, không push lên github)
-docs/lessions/
